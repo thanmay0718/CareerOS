@@ -1,0 +1,26 @@
+package com.careeros.backendtracker.enums;
+
+public enum BackendCategory {
+  CORE_JAVA,
+  ADVANCED_JAVA,
+  SQL,
+  DATABASE_DESIGN,
+  HTTP,
+  REST_API,
+  SPRING_CORE,
+  SPRING_BOOT,
+  SPRING_DATA_JPA,
+  HIBERNATE,
+  SPRING_SECURITY,
+  JWT,
+  VALIDATION,
+  TESTING,
+  LOGGING,
+  DEPLOYMENT,
+  DOCKER,
+  REDIS,
+  KAFKA,
+  AWS,
+  MICROSERVICES
+}
+
