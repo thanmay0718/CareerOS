@@ -2,6 +2,8 @@ package com.careeros.analytics.service.impl;
 
 import com.careeros.analytics.dto.AnalyticsDataPointResponse;
 import com.careeros.analytics.dto.AnalyticsOverviewResponse;
+import com.careeros.analytics.dto.AnalyticsInsightResponse;
+import com.careeros.analytics.dto.AnalyticsStoryResponse;
 import com.careeros.analytics.dto.ActivityPointResponse;
 import com.careeros.analytics.dto.CategoryDistributionResponse;
 import com.careeros.analytics.dto.CheckInAnalyticsResponse;
@@ -217,6 +219,63 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     return new ProductivityAnalyticsResponse(dailyProductivity, weeklyProductivity, monthlyProductivity, currentStreak, consistencyScore);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public AnalyticsStoryResponse getStory(UserAccount userAccount) {
+    List<CareerTask> tasks = careerTaskRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<Plan> plans = planRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<DailyCheckIn> checkIns = dailyCheckInRepository.findByUserIdOrderByCheckInDateDesc(userAccount.getId());
+    LocalDate today = LocalDate.now(ZoneId.systemDefault());
+    TaskStatisticsSnapshot taskSnapshot = taskSnapshot(tasks, checkIns, today);
+    int todaysProductivity = productivityScore(tasks, plans, checkIns, today, today);
+    int consistency = consistencyScore(checkIns, today);
+    double focusHours = studyHoursFor(checkIns, today);
+    double thisWeekHours = studyHoursBetween(checkIns, today.minusDays(6), today);
+    double lastWeekHours = studyHoursBetween(checkIns, today.minusDays(13), today.minusDays(7));
+    int weeklyImprovement = lastWeekHours == 0d ? (thisWeekHours == 0d ? 0 : 100) : (int) Math.round(((thisWeekHours - lastWeekHours) / lastWeekHours) * 100);
+    String weakestCategory = weakestCategory(tasks);
+    String strongestCategory = strongestCategory(tasks);
+    List<AnalyticsInsightResponse> insights = List.of(
+        new AnalyticsInsightResponse(
+            "What improved?",
+            weeklyImprovement >= 0 ? "Study time improved this week." : "Study time dropped this week.",
+            "This week: " + roundHours(thisWeekHours) + "h, previous week: " + roundHours(lastWeekHours) + "h.",
+            "Open check-ins",
+            "/practice",
+            weeklyImprovement >= 0 ? "POSITIVE" : "WARNING"),
+        new AnalyticsInsightResponse(
+            "Which habit is improving?",
+            consistency >= 70 ? "Daily consistency is becoming reliable." : "Daily consistency needs attention.",
+            "You checked in on " + Math.round((consistency / 100.0) * 7) + " of the last 7 days.",
+            "Open check-ins",
+            "/practice",
+            consistency >= 70 ? "POSITIVE" : "WARNING"),
+        new AnalyticsInsightResponse(
+            "Which skill needs attention?",
+            weakestCategory == null ? "No weak area can be calculated yet." : weakestCategory + " has the weakest completion pattern.",
+            weakestCategory == null ? "Add categorized tasks to unlock skill insights." : "Backend compared completion by task category.",
+            "Open practice",
+            "/practice",
+            weakestCategory == null ? "NEUTRAL" : "WARNING"),
+        new AnalyticsInsightResponse(
+            "What should I focus on next?",
+            weakestCategory == null ? "Create categorized practice tasks." : "Practice " + weakestCategory + " next.",
+            strongestCategory == null ? "No strong area calculated yet." : "Strong area: " + strongestCategory + ".",
+            "Open practice",
+            "/practice",
+            "ACTION"));
+    return new AnalyticsStoryResponse(
+        todaysProductivity,
+        productivityLabel(todaysProductivity),
+        (int) Math.round(taskSnapshot.completionRate()),
+        consistency,
+        focusHours,
+        weeklyImprovement,
+        weakestCategory == null ? "Add categorized work so CareerOS can recommend a focused topic." : "Practice " + weakestCategory + " tomorrow.",
+        insights,
+        buildHeatmap(checkIns, today.minusDays(29), today));
+  }
+
   private TaskStatisticsSnapshot taskSnapshot(UserAccount userAccount) {
     List<CareerTask> tasks = careerTaskRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
     List<DailyCheckIn> checkIns = dailyCheckInRepository.findByUserIdOrderByCheckInDateDesc(userAccount.getId());
@@ -375,6 +434,47 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
   private String formatPercent(double value) {
     return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).toPlainString() + "%";
+  }
+
+  private String productivityLabel(int score) {
+    if (score >= 85) {
+      return "Excellent";
+    }
+    if (score >= 65) {
+      return "Strong";
+    }
+    if (score >= 40) {
+      return "Building";
+    }
+    return "Needs attention";
+  }
+
+  private String weakestCategory(List<CareerTask> tasks) {
+    return categoryByCompletion(tasks, true);
+  }
+
+  private String strongestCategory(List<CareerTask> tasks) {
+    return categoryByCompletion(tasks, false);
+  }
+
+  private String categoryByCompletion(List<CareerTask> tasks, boolean weakest) {
+    Map<String, List<CareerTask>> grouped = tasks.stream()
+        .collect(java.util.stream.Collectors.groupingBy(task -> task.getCategory().name()));
+    return grouped.entrySet().stream()
+        .filter(entry -> entry.getValue().size() >= 2)
+        .sorted((left, right) -> {
+          int leftRate = categoryCompletionRate(left.getValue());
+          int rightRate = categoryCompletionRate(right.getValue());
+          return weakest ? Integer.compare(leftRate, rightRate) : Integer.compare(rightRate, leftRate);
+        })
+        .map(entry -> formatCategory(entry.getKey()))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private int categoryCompletionRate(List<CareerTask> tasks) {
+    long completed = tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.COMPLETED).count();
+    return percent(completed, tasks.size());
   }
 
   private double roundHours(double hours) {

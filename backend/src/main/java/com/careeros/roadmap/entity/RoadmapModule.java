@@ -86,6 +86,22 @@ public class RoadmapModule extends BaseEntity {
     return notes;
   }
 
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setSequenceNumber(int sequenceNumber) {
+    this.sequenceNumber = sequenceNumber;
+  }
+
+  public void setEstimatedTimeHours(Integer estimatedTimeHours) {
+    this.estimatedTimeHours = estimatedTimeHours;
+  }
+
   public void setCompleted(boolean completed) {
     this.completed = completed;
   }

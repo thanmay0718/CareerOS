@@ -4,6 +4,7 @@ public enum TaskStatus {
   TODO,
   IN_PROGRESS,
   COMPLETED,
-  BLOCKED
+  BLOCKED,
+  MISSED,
+  RESCHEDULED
 }
-

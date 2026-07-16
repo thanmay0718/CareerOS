@@ -3,6 +3,7 @@ package com.careeros.analytics.controller;
 import com.careeros.analytics.dto.AnalyticsOverviewResponse;
 import com.careeros.analytics.dto.CheckInAnalyticsResponse;
 import com.careeros.analytics.dto.AnalyticsSummaryResponse;
+import com.careeros.analytics.dto.AnalyticsStoryResponse;
 import com.careeros.analytics.dto.PlanAnalyticsResponse;
 import com.careeros.analytics.dto.ProductivityAnalyticsResponse;
 import com.careeros.analytics.dto.StudyAnalyticsResponse;
@@ -58,5 +59,10 @@ public class AnalyticsController {
   @GetMapping("/productivity")
   public ApiResponse<ProductivityAnalyticsResponse> productivity(@AuthenticationPrincipal UserAccount userAccount) {
     return ApiResponse.success("Productivity analytics loaded", analyticsService.getProductivityAnalytics(userAccount));
+  }
+
+  @GetMapping("/story")
+  public ApiResponse<AnalyticsStoryResponse> story(@AuthenticationPrincipal UserAccount userAccount) {
+    return ApiResponse.success("Analytics story loaded", analyticsService.getStory(userAccount));
   }
 }

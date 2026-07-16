@@ -8,6 +8,8 @@ public record DailyCheckInResponse(
     Double studyHours,
     Integer problemsSolved,
     String mood,
+    Integer productivityRating,
+    String energyLevel,
     Integer energy,
     Integer confidence,
     String todaysAchievement,
@@ -15,4 +17,3 @@ public record DailyCheckInResponse(
     String tomorrowGoal,
     String notes) {
 }
-

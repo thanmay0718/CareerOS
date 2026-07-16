@@ -50,7 +50,7 @@ export default function CompaniesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-6 shadow-glow">
+      <header className="premium-page-header rounded-2xl p-6">
         <p className="text-xs uppercase tracking-[0.28em] text-sky-300">Company Explorer</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Company database</h1>
       </header>

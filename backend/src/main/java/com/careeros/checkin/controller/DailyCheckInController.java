@@ -69,6 +69,8 @@ public class DailyCheckInController {
     checkIn.setStudyHours(request.studyHours());
     checkIn.setProblemsSolved(request.problemsSolved());
     checkIn.setMood(request.mood());
+    checkIn.setProductivityRating(request.productivityRating());
+    checkIn.setEnergyLevel(request.energyLevel());
     checkIn.setEnergy(request.energy());
     checkIn.setConfidence(request.confidence());
     checkIn.setTodaysAchievement(request.todaysAchievement());
@@ -99,6 +101,8 @@ public class DailyCheckInController {
     checkIn.setStudyHours(request.studyHours());
     checkIn.setProblemsSolved(request.problemsSolved());
     checkIn.setMood(request.mood());
+    checkIn.setProductivityRating(request.productivityRating());
+    checkIn.setEnergyLevel(request.energyLevel());
     checkIn.setEnergy(request.energy());
     checkIn.setConfidence(request.confidence());
     checkIn.setTodaysAchievement(request.todaysAchievement());
@@ -116,6 +120,8 @@ public class DailyCheckInController {
         checkIn.getStudyHours(),
         checkIn.getProblemsSolved(),
         checkIn.getMood(),
+        checkIn.getProductivityRating(),
+        checkIn.getEnergyLevel(),
         checkIn.getEnergy(),
         checkIn.getConfidence(),
         checkIn.getTodaysAchievement(),

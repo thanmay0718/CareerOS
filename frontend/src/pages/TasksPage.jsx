@@ -1,11 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckCircle2, Edit3, Filter, Search, Trash2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Edit3, Filter, History, Search, Trash2, X } from 'lucide-react';
 import { ApiAlert } from '../components/ApiAlert';
 import { EmptyState } from '../components/EmptyState';
 import { SectionCard } from '../components/SectionCard';
 import { Spinner } from '../components/Spinner';
-import { useCompleteTask, useCreateTask, useDeleteTask, useTasks, useUpdateTask } from '../hooks/useTasks';
+import {
+  useCompleteTask,
+  useCreateTask,
+  useDeleteTask,
+  useMissedTaskInsights,
+  useMissTask,
+  useTaskTimeline,
+  useTasks,
+  useUpdateTask,
+} from '../hooks/useTasks';
 import { usePlans } from '../hooks/usePlans';
 import { getApiErrorMessage, getApiValidationErrors } from '../utils/apiErrors';
 
@@ -20,6 +29,8 @@ const emptyFormValues = {
   dueDate: '',
   estimatedDurationMinutes: '',
   notes: '',
+  reminderTimes: '',
+  browserReminderEnabled: false,
 };
 
 function formatDate(value) {
@@ -34,7 +45,16 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function TaskCard({ task, onComplete, onEdit, onDelete }) {
+const missedReasons = [
+  ['FORGOT', 'Forgot'],
+  ['TOO_DIFFICULT', 'Too difficult'],
+  ['BUSY_SCHEDULE', 'Busy schedule'],
+  ['HIGHER_PRIORITY_WORK', 'Higher priority work'],
+  ['PERSONAL_REASON', 'Personal reason'],
+  ['OTHER', 'Other'],
+];
+
+function TaskCard({ task, onComplete, onMiss, onEdit, onDelete }) {
   return (
     <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -71,6 +91,13 @@ function TaskCard({ task, onComplete, onEdit, onDelete }) {
       </div>
 
       {task.notes ? <p className="mt-4 text-sm leading-6 text-slate-400">{task.notes}</p> : null}
+      {task.reminderTimes ? <p className="mt-3 text-xs text-slate-400">Reminders: {task.reminderTimes}</p> : null}
+      {task.missedReason ? (
+        <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-500/10 p-3 text-sm text-amber-100">
+          Missed reason: {task.missedReason}
+          {task.missedReasonDetail ? <span className="text-amber-100/80"> - {task.missedReasonDetail}</span> : null}
+        </div>
+      ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
         {task.status !== 'COMPLETED' ? (
@@ -81,6 +108,16 @@ function TaskCard({ task, onComplete, onEdit, onDelete }) {
           >
             <CheckCircle2 size={16} />
             Complete
+          </button>
+        ) : null}
+        {task.overdue && task.status !== 'COMPLETED' && task.status !== 'MISSED' ? (
+          <button
+            type="button"
+            onClick={() => onMiss(task)}
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-4 py-2 text-sm text-amber-100 transition hover:bg-amber-500/25"
+          >
+            <AlertCircle size={16} />
+            Explain miss
           </button>
         ) : null}
         <button
@@ -126,12 +163,18 @@ export default function TasksPage() {
   const [submitError, setSubmitError] = useState('');
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [missedTask, setMissedTask] = useState(null);
+  const [missedReason, setMissedReason] = useState('FORGOT');
+  const [missedDetail, setMissedDetail] = useState('');
 
   const tasksQuery = useTasks(filters);
+  const timelineQuery = useTaskTimeline();
+  const missedInsightsQuery = useMissedTaskInsights();
   const plansQuery = usePlans();
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const completeTaskMutation = useCompleteTask();
+  const missTaskMutation = useMissTask();
   const deleteTaskMutation = useDeleteTask();
 
   const { register, handleSubmit, reset, setError, formState: { errors, isSubmitting } } = useForm({
@@ -177,6 +220,8 @@ export default function TasksPage() {
       dueDate: task.dueDate || '',
       estimatedDurationMinutes: task.estimatedDurationMinutes || '',
       notes: task.notes || '',
+      reminderTimes: task.reminderTimes || '',
+      browserReminderEnabled: Boolean(task.browserReminderEnabled),
     });
   };
 
@@ -196,6 +241,8 @@ export default function TasksPage() {
       estimatedDurationMinutes: values.estimatedDurationMinutes ? Number(values.estimatedDurationMinutes) : null,
       notes: values.notes || null,
       status: values.status || null,
+      reminderTimes: values.reminderTimes || null,
+      browserReminderEnabled: Boolean(values.browserReminderEnabled),
     };
 
     try {
@@ -221,6 +268,22 @@ export default function TasksPage() {
     await completeTaskMutation.mutateAsync(taskId);
   };
 
+  const submitMissedReason = async () => {
+    if (!missedTask) {
+      return;
+    }
+    await missTaskMutation.mutateAsync({
+      taskId: missedTask.id,
+      payload: {
+        reason: missedReason,
+        detail: missedDetail || null,
+      },
+    });
+    setMissedTask(null);
+    setMissedReason('FORGOT');
+    setMissedDetail('');
+  };
+
   const handleDelete = async (taskId) => {
     await deleteTaskMutation.mutateAsync(taskId);
     if (editingTaskId === taskId) {
@@ -233,7 +296,7 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-6 shadow-glow backdrop-blur">
+      <header className="premium-page-header rounded-2xl p-6">
         <p className="text-xs uppercase tracking-[0.28em] text-sky-300">Tasks</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Career tasks</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
@@ -482,6 +545,21 @@ export default function TasksPage() {
               </label>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm text-slate-300">Reminder times</span>
+                <input
+                  placeholder="09:00, 18:30"
+                  {...register('reminderTimes')}
+                  className="w-full rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400"
+                />
+              </label>
+              <label className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm text-slate-300">
+                <input type="checkbox" {...register('browserReminderEnabled')} />
+                Browser reminders enabled by backend status
+              </label>
+            </div>
+
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
@@ -523,6 +601,7 @@ export default function TasksPage() {
                   key={task.id}
                   task={task}
                   onComplete={handleComplete}
+                  onMiss={setMissedTask}
                   onEdit={startEdit}
                   onDelete={handleDelete}
                 />
@@ -562,6 +641,103 @@ export default function TasksPage() {
           )}
         </SectionCard>
       </div>
+
+      <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+        <SectionCard title="Missed task insights">
+          {missedInsightsQuery.isLoading ? (
+            <Spinner label="Loading missed task insights" />
+          ) : missedInsightsQuery.data?.length ? (
+            <div className="space-y-3">
+              {missedInsightsQuery.data.map((insight) => (
+                <div key={insight.reason} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="text-xs font-semibold text-slate-400">Last 30 days</div>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="font-semibold text-white">{insight.reason}</span>
+                    <span className="text-2xl font-bold text-white">{insight.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No missed-task patterns yet" description="When overdue tasks are explained, behavior insights will appear here." />
+          )}
+        </SectionCard>
+
+        <SectionCard title="Task history timeline">
+          {timelineQuery.isLoading ? (
+            <Spinner label="Loading task history" />
+          ) : timelineQuery.data?.length ? (
+            <div className="space-y-3">
+              {timelineQuery.data.slice(0, 12).map((event) => (
+                <article key={event.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 grid h-8 w-8 place-items-center rounded-2xl bg-indigo-500/15 text-indigo-100">
+                      <History size={15} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-semibold text-white">{event.taskTitle}</h3>
+                        <span className="text-xs text-slate-500">{formatDate(event.occurredAt)}</span>
+                      </div>
+                      <p className="mt-1 text-sm text-slate-400">{event.eventType}</p>
+                      {event.missedReason ? <p className="mt-2 text-sm text-amber-100">Reason: {event.missedReason}</p> : null}
+                      {event.detail ? <p className="mt-2 text-sm leading-6 text-slate-400">{event.detail}</p> : null}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="No task history yet" description="Completed, missed, updated, and rescheduled task events will appear here." />
+          )}
+        </SectionCard>
+      </section>
+
+      {missedTask ? (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/70 px-4 backdrop-blur" role="dialog" aria-modal="true">
+          <div className="liquid-glass w-full max-w-lg rounded-2xl p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-xs font-semibold text-amber-200">You missed</div>
+                <h2 className="mt-2 text-2xl font-bold text-white">{missedTask.title}</h2>
+                <p className="mt-2 text-sm text-slate-400">Why was this not completed?</p>
+              </div>
+              <button type="button" onClick={() => setMissedTask(null)} className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-white/10">
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              {missedReasons.map(([value, label]) => (
+                <label key={value} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-200">
+                  <input
+                    type="radio"
+                    name="missedReason"
+                    value={value}
+                    checked={missedReason === value}
+                    onChange={(event) => setMissedReason(event.target.value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+
+            <label className="mt-4 block">
+              <span className="mb-2 block text-sm text-slate-300">Optional detail</span>
+              <textarea value={missedDetail} onChange={(event) => setMissedDetail(event.target.value)} rows="3" className="w-full rounded-2xl px-4 py-3" />
+            </label>
+
+            <button
+              type="button"
+              onClick={submitMissedReason}
+              disabled={missTaskMutation.isPending}
+              className="stitch-button mt-4 w-full rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
+            >
+              {missTaskMutation.isPending ? 'Saving reason...' : 'Save missed reason'}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

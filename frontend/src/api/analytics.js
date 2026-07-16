@@ -44,3 +44,8 @@ export async function fetchAnalyticsProductivity() {
   const response = await apiClient.get('/analytics/productivity');
   return response.data.data;
 }
+
+export async function fetchAnalyticsStory() {
+  const response = await apiClient.get('/analytics/story');
+  return response.data.data;
+}

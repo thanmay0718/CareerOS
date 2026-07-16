@@ -40,7 +40,7 @@ export default function ResumesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-6 shadow-glow">
+      <header className="premium-page-header rounded-2xl p-6">
         <p className="text-xs uppercase tracking-[0.28em] text-sky-300">Resume Center</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Resume management</h1>
         <p className="mt-2 text-sm text-slate-400">Phase 2 stores resume versions, history, notes, active status, and archives. AI review is intentionally not included.</p>

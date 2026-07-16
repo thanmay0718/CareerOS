@@ -25,6 +25,8 @@ export function useSaveTodayCheckIn() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['check-ins'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 }

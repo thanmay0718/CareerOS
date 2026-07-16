@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicOnlyRoute } from './PublicOnlyRoute';
@@ -14,6 +14,9 @@ const RoadmapsPage = lazy(() => import('../pages/RoadmapsPage'));
 const PlacementsPage = lazy(() => import('../pages/PlacementsPage'));
 const CompaniesPage = lazy(() => import('../pages/CompaniesPage'));
 const ResumesPage = lazy(() => import('../pages/ResumesPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const NotesPage = lazy(() => import('../pages/NotesPage'));
+const LandingPage = lazy(() => import('../pages/LandingPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RegisterPage = lazy(() => import('../pages/RegisterPage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
@@ -31,14 +34,19 @@ export function AppRouter() {
     <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route element={<PublicOnlyRoute />}>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/learning" element={<RoadmapsPage />} />
+            <Route path="/practice" element={<TasksPage />} />
+            <Route path="/projects" element={<PlansPage />} />
+            <Route path="/notes" element={<NotesPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/tasks" element={<TasksPage />} />

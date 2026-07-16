@@ -1,12 +1,15 @@
 export function StatCard({ label, value, highlight = false }) {
   const cardClasses = highlight
-    ? 'rounded-2xl border border-sky-400/30 bg-sky-500/10 p-4 shadow-glow backdrop-blur'
-    : 'rounded-2xl border border-slate-800/80 bg-slate-900/70 p-4 shadow-glow backdrop-blur';
+    ? 'stitch-panel rounded-2xl border-sky-400/30 p-5 transition duration-200 hover:-translate-y-1'
+    : 'stitch-panel rounded-2xl p-5 transition duration-200 hover:-translate-y-1';
 
   return (
     <div className={cardClasses}>
-      <div className="text-xs uppercase tracking-[0.22em] text-slate-400">{label}</div>
-      <div className="mt-3 text-2xl font-semibold text-white">{value}</div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs font-bold text-slate-400">{label}</div>
+        <div className={`h-2 w-2 rounded-full ${highlight ? 'bg-emerald-400' : 'bg-indigo-300/70'}`} />
+      </div>
+      <div className="mt-4 truncate font-display text-3xl font-bold text-white">{value}</div>
     </div>
   );
 }

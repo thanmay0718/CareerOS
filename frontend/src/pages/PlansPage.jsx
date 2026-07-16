@@ -215,7 +215,7 @@ export default function PlansPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[2rem] border border-slate-800/80 bg-slate-950/75 p-6 shadow-glow backdrop-blur">
+      <header className="premium-page-header rounded-2xl p-6">
         <p className="text-xs uppercase tracking-[0.28em] text-sky-300">Plans</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Career plans</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">

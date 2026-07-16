@@ -5,10 +5,10 @@ import java.util.List;
 public record DashboardResponse(
     boolean hasData,
     WelcomeSection welcome,
+    DashboardRecommendation recommendation,
     List<SummaryCard> summaryCards,
     List<ProgressCard> progressCards,
     UpcomingTasksSection upcomingTasks,
     List<ActivityItem> recentActivity,
     EmptyState emptyState) {
 }
-

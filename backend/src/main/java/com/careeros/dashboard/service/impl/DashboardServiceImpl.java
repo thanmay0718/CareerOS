@@ -4,6 +4,7 @@ import com.careeros.checkin.entity.DailyCheckIn;
 import com.careeros.checkin.repository.DailyCheckInRepository;
 import com.careeros.company.repository.CompanyProfileRepository;
 import com.careeros.dashboard.dto.ActivityItem;
+import com.careeros.dashboard.dto.DashboardRecommendation;
 import com.careeros.dashboard.dto.DashboardResponse;
 import com.careeros.dashboard.dto.EmptyState;
 import com.careeros.dashboard.dto.ProgressCard;
@@ -98,6 +99,7 @@ public class DashboardServiceImpl implements DashboardService {
     List<ProgressCard> progressCards = buildProgressCards(tasks, roadmaps);
     UpcomingTasksSection upcomingTasks = buildUpcomingTasks(tasks, today, tomorrow);
     List<ActivityItem> activityItems = buildActivityFeed(plans, tasks, checkIns);
+    DashboardRecommendation recommendation = buildRecommendation(plans, tasks, checkIns, roadmaps, applications, today);
     WelcomeSection welcomeSection = new WelcomeSection(
         greetingForHour(LocalDateTime.now().getHour()),
         userAccount.getFullName(),
@@ -114,11 +116,129 @@ public class DashboardServiceImpl implements DashboardService {
     return new DashboardResponse(
         hasData,
         welcomeSection,
+        recommendation,
         summaryCards,
         progressCards,
         upcomingTasks,
         activityItems,
         emptyState);
+  }
+
+  private DashboardRecommendation buildRecommendation(
+      List<Plan> plans,
+      List<CareerTask> tasks,
+      List<DailyCheckIn> checkIns,
+      List<LearningRoadmap> roadmaps,
+      List<PlacementApplication> applications,
+      LocalDate today) {
+    List<CareerTask> overdueTasks = tasks.stream()
+        .filter(this::isOverdue)
+        .sorted(Comparator.comparing(CareerTask::getDueDate))
+        .toList();
+    if (!overdueTasks.isEmpty()) {
+      CareerTask task = overdueTasks.get(0);
+      return new DashboardRecommendation(
+          "Recover overdue task",
+          task.getTitle() + " was due on " + task.getDueDate() + ", so it should be handled before new work.",
+          "Open practice",
+          "/practice",
+          "HIGH",
+          "TASK");
+    }
+
+    List<CareerTask> todayTasks = tasks.stream()
+        .filter(task -> today.equals(task.getDueDate()) && task.getTaskStatus() != TaskStatus.COMPLETED)
+        .sorted(Comparator.comparing(CareerTask::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+        .toList();
+    if (!todayTasks.isEmpty()) {
+      CareerTask task = todayTasks.get(0);
+      return new DashboardRecommendation(
+          "Start today's focus",
+          task.getTitle() + " is due today and is still marked " + task.getTaskStatus().name() + ".",
+          "Open practice",
+          "/practice",
+          task.getPriority().name(),
+          "TASK");
+    }
+
+    List<PlacementApplication> upcomingInterviews = applications.stream()
+        .filter(application -> application.getInterviewDate() != null && !application.getInterviewDate().isBefore(today))
+        .sorted(Comparator.comparing(PlacementApplication::getInterviewDate))
+        .toList();
+    if (!upcomingInterviews.isEmpty()) {
+      PlacementApplication application = upcomingInterviews.get(0);
+      return new DashboardRecommendation(
+          "Prepare for upcoming interview",
+          application.getCompany() + " has an interview date on " + application.getInterviewDate() + ".",
+          "Open practice",
+          "/practice",
+          "HIGH",
+          "PLACEMENT");
+    }
+
+    List<LearningRoadmap> inProgressRoadmaps = roadmaps.stream()
+        .filter(roadmap -> roadmap.getCompletionPercentage() > 0 && roadmap.getCompletionPercentage() < 100)
+        .sorted(Comparator.comparingInt(LearningRoadmap::getCompletionPercentage).reversed())
+        .toList();
+    if (!inProgressRoadmaps.isEmpty()) {
+      LearningRoadmap roadmap = inProgressRoadmaps.get(0);
+      return new DashboardRecommendation(
+          "Continue learning path",
+          roadmap.getTitle() + " is " + roadmap.getCompletionPercentage() + "% complete, so continuing it protects your momentum.",
+          "Open learning",
+          "/learning",
+          "MEDIUM",
+          "LEARNING");
+    }
+
+    List<LearningRoadmap> notStartedRoadmaps = roadmaps.stream()
+        .filter(roadmap -> roadmap.getCompletionPercentage() == 0)
+        .sorted(Comparator.comparing(LearningRoadmap::getTitle))
+        .toList();
+    if (!notStartedRoadmaps.isEmpty()) {
+      LearningRoadmap roadmap = notStartedRoadmaps.get(0);
+      return new DashboardRecommendation(
+          "Start selected learning path",
+          roadmap.getTitle() + " exists in your learning paths but has not been started yet.",
+          "Open learning",
+          "/learning",
+          "MEDIUM",
+          "LEARNING");
+    }
+
+    LocalDate lastCheckInDate = checkIns.stream()
+        .map(DailyCheckIn::getCheckInDate)
+        .max(Comparator.naturalOrder())
+        .orElse(null);
+    if (lastCheckInDate == null || lastCheckInDate.isBefore(today)) {
+      return new DashboardRecommendation(
+          "Log today's check-in",
+          lastCheckInDate == null
+              ? "No check-ins exist yet, so analytics cannot personalize your journey."
+              : "Your last check-in was on " + lastCheckInDate + ", so today's progress is not captured yet.",
+          "Open practice",
+          "/practice",
+          "MEDIUM",
+          "CHECKIN");
+    }
+
+    if (plans.isEmpty()) {
+      return new DashboardRecommendation(
+          "Create your first career plan",
+          "No plans exist yet, so the system cannot sequence your preparation work.",
+          "Open projects",
+          "/projects",
+          "HIGH",
+          "PLAN");
+    }
+
+    return new DashboardRecommendation(
+        "Review analytics",
+        "Your immediate tasks are clear, so analytics can show what changed across recent activity.",
+        "Open analytics",
+        "/analytics",
+        "LOW",
+        "ANALYTICS");
   }
 
   private List<SummaryCard> buildSummaryCards(

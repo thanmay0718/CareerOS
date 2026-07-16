@@ -1,5 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { completeTask, createTask, deleteTask, fetchTasks, updateTask } from '../api/tasks';
+import {
+  completeTask,
+  createTask,
+  deleteTask,
+  fetchMissedTaskInsights,
+  fetchTaskTimeline,
+  fetchTasks,
+  missTask,
+  rescheduleTask,
+  updateTask,
+} from '../api/tasks';
 
 export function useTasks(filters = {}) {
   return useQuery({
@@ -17,6 +27,7 @@ export function useCreateTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
     },
   });
 }
@@ -30,6 +41,7 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['plans'] });
+      queryClient.invalidateQueries({ queryKey: ['taskTimeline'] });
     },
   });
 }
@@ -42,7 +54,52 @@ export function useCompleteTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['taskTimeline'] });
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
     },
+  });
+}
+
+export function useMissTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ taskId, payload }) => missTask(taskId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['taskTimeline'] });
+      queryClient.invalidateQueries({ queryKey: ['missedTaskInsights'] });
+    },
+  });
+}
+
+export function useRescheduleTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ taskId, payload }) => rescheduleTask(taskId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['taskTimeline'] });
+    },
+  });
+}
+
+export function useTaskTimeline() {
+  return useQuery({
+    queryKey: ['taskTimeline'],
+    queryFn: fetchTaskTimeline,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useMissedTaskInsights() {
+  return useQuery({
+    queryKey: ['missedTaskInsights'],
+    queryFn: fetchMissedTaskInsights,
+    staleTime: 30 * 1000,
   });
 }
 

@@ -46,6 +46,11 @@ public class DailyCheckIn extends BaseEntity {
   @Column(nullable = false)
   private Integer confidence = 0;
 
+  private Integer productivityRating;
+
+  @Column(length = 20)
+  private String energyLevel;
+
   @Column(columnDefinition = "TEXT")
   private String todaysAchievement;
 
@@ -98,6 +103,14 @@ public class DailyCheckIn extends BaseEntity {
     return confidence;
   }
 
+  public Integer getProductivityRating() {
+    return productivityRating;
+  }
+
+  public String getEnergyLevel() {
+    return energyLevel;
+  }
+
   public String getTodaysAchievement() {
     return todaysAchievement;
   }
@@ -134,6 +147,14 @@ public class DailyCheckIn extends BaseEntity {
     this.confidence = confidence == null ? 0 : confidence;
   }
 
+  public void setProductivityRating(Integer productivityRating) {
+    this.productivityRating = productivityRating;
+  }
+
+  public void setEnergyLevel(String energyLevel) {
+    this.energyLevel = energyLevel;
+  }
+
   public void setTodaysAchievement(String todaysAchievement) {
     this.todaysAchievement = todaysAchievement;
   }
@@ -150,4 +171,3 @@ public class DailyCheckIn extends BaseEntity {
     this.notes = notes;
   }
 }
-

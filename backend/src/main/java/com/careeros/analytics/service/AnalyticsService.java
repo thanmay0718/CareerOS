@@ -7,6 +7,7 @@ import com.careeros.analytics.dto.ProductivityAnalyticsResponse;
 import com.careeros.analytics.dto.StudyAnalyticsResponse;
 import com.careeros.analytics.dto.TaskAnalyticsResponse;
 import com.careeros.analytics.dto.AnalyticsSummaryResponse;
+import com.careeros.analytics.dto.AnalyticsStoryResponse;
 import com.careeros.dashboard.dto.ActivityItem;
 import com.careeros.dashboard.dto.DashboardStat;
 import com.careeros.user.entity.UserAccount;
@@ -30,4 +31,6 @@ public interface AnalyticsService {
   CheckInAnalyticsResponse getCheckInAnalytics(UserAccount userAccount);
 
   ProductivityAnalyticsResponse getProductivityAnalytics(UserAccount userAccount);
+
+  AnalyticsStoryResponse getStory(UserAccount userAccount);
 }

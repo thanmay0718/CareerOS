@@ -5,6 +5,7 @@ import {
   fetchAnalyticsPlans,
   fetchAnalyticsProductivity,
   fetchAnalyticsStudy,
+  fetchAnalyticsStory,
   fetchAnalyticsSummary,
   fetchAnalyticsTasks,
   fetchDashboardActivity,
@@ -79,6 +80,14 @@ export function useAnalyticsProductivity() {
   return useQuery({
     queryKey: ['analytics', 'productivity'],
     queryFn: fetchAnalyticsProductivity,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAnalyticsStory() {
+  return useQuery({
+    queryKey: ['analytics', 'story'],
+    queryFn: fetchAnalyticsStory,
     staleTime: 30 * 1000,
   });
 }

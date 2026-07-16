@@ -4,16 +4,25 @@ import com.careeros.common.dto.ApiResponse;
 import com.careeros.common.exception.ResourceNotFoundException;
 import com.careeros.plan.dto.CareerTaskResponse;
 import com.careeros.plan.dto.CreateTaskRequest;
+import com.careeros.plan.dto.MissTaskRequest;
+import com.careeros.plan.dto.MissedTaskInsightResponse;
+import com.careeros.plan.dto.RescheduleTaskRequest;
 import com.careeros.plan.dto.TaskPageResponse;
+import com.careeros.plan.dto.TaskHistoryResponse;
 import com.careeros.plan.entity.CareerTask;
 import com.careeros.plan.entity.Plan;
+import com.careeros.plan.entity.TaskHistoryEvent;
+import com.careeros.plan.enums.MissedTaskReason;
 import com.careeros.plan.enums.PlanType;
+import com.careeros.plan.enums.TaskEventType;
 import com.careeros.plan.enums.TaskStatus;
 import com.careeros.plan.repository.CareerTaskRepository;
 import com.careeros.plan.repository.PlanRepository;
+import com.careeros.plan.repository.TaskHistoryEventRepository;
 import com.careeros.user.entity.UserAccount;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -36,10 +45,15 @@ public class CareerTaskController {
 
   private final CareerTaskRepository careerTaskRepository;
   private final PlanRepository planRepository;
+  private final TaskHistoryEventRepository taskHistoryEventRepository;
 
-  public CareerTaskController(CareerTaskRepository careerTaskRepository, PlanRepository planRepository) {
+  public CareerTaskController(
+      CareerTaskRepository careerTaskRepository,
+      PlanRepository planRepository,
+      TaskHistoryEventRepository taskHistoryEventRepository) {
     this.careerTaskRepository = careerTaskRepository;
     this.planRepository = planRepository;
+    this.taskHistoryEventRepository = taskHistoryEventRepository;
   }
 
   @GetMapping
@@ -98,7 +112,10 @@ public class CareerTaskController {
       careerTask.setTaskStatus(request.status());
     }
     careerTask.setNotes(request.notes());
+    careerTask.setReminderTimes(request.reminderTimes());
+    careerTask.setBrowserReminderEnabled(Boolean.TRUE.equals(request.browserReminderEnabled()));
     CareerTask savedTask = careerTaskRepository.save(careerTask);
+    saveHistory(userAccount, savedTask, TaskEventType.CREATED, null, "Task created", null, savedTask.getDueDate());
     return ApiResponse.success("Task created", toResponse(savedTask));
   }
 
@@ -109,6 +126,7 @@ public class CareerTaskController {
       @Valid @RequestBody CreateTaskRequest request) {
     CareerTask careerTask = careerTaskRepository.findByIdAndUserId(taskId, userAccount.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    LocalDate previousDueDate = careerTask.getDueDate();
     careerTask.setPlan(resolvePlan(userAccount, request.planId()));
     careerTask.setPlanType(resolveTaskPlanType(careerTask.getPlan(), request.planType()));
     careerTask.setTitle(request.title());
@@ -119,7 +137,11 @@ public class CareerTaskController {
     careerTask.setDueDate(request.dueDate());
     careerTask.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
     careerTask.setNotes(request.notes());
-    return ApiResponse.success("Task updated", toResponse(careerTaskRepository.save(careerTask)));
+    careerTask.setReminderTimes(request.reminderTimes());
+    careerTask.setBrowserReminderEnabled(Boolean.TRUE.equals(request.browserReminderEnabled()));
+    CareerTask savedTask = careerTaskRepository.save(careerTask);
+    saveHistory(userAccount, savedTask, TaskEventType.UPDATED, null, "Task updated", previousDueDate, savedTask.getDueDate());
+    return ApiResponse.success("Task updated", toResponse(savedTask));
   }
 
   @DeleteMapping("/{taskId}")
@@ -140,7 +162,61 @@ public class CareerTaskController {
         .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
     careerTask.markCompleted(LocalDate.now());
     careerTaskRepository.save(careerTask);
+    saveHistory(userAccount, careerTask, TaskEventType.COMPLETED, null, "Task completed", careerTask.getDueDate(), careerTask.getDueDate());
     return ApiResponse.success("Task completed", toResponse(careerTask));
+  }
+
+  @PatchMapping("/{taskId}/missed")
+  public ApiResponse<CareerTaskResponse> missTask(
+      @AuthenticationPrincipal UserAccount userAccount,
+      @PathVariable Long taskId,
+      @Valid @RequestBody MissTaskRequest request) {
+    CareerTask careerTask = careerTaskRepository.findByIdAndUserId(taskId, userAccount.getId())
+        .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    careerTask.markMissed(request.reason(), request.detail());
+    CareerTask savedTask = careerTaskRepository.save(careerTask);
+    saveHistory(userAccount, savedTask, TaskEventType.MISSED, request.reason(), request.detail(), savedTask.getDueDate(), savedTask.getDueDate());
+    return ApiResponse.success("Missed task reason saved", toResponse(savedTask));
+  }
+
+  @PatchMapping("/{taskId}/reschedule")
+  public ApiResponse<CareerTaskResponse> rescheduleTask(
+      @AuthenticationPrincipal UserAccount userAccount,
+      @PathVariable Long taskId,
+      @Valid @RequestBody RescheduleTaskRequest request) {
+    CareerTask careerTask = careerTaskRepository.findByIdAndUserId(taskId, userAccount.getId())
+        .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    LocalDate previousDueDate = careerTask.getDueDate();
+    careerTask.reschedule(request.dueDate());
+    CareerTask savedTask = careerTaskRepository.save(careerTask);
+    saveHistory(userAccount, savedTask, TaskEventType.RESCHEDULED, null, request.reason(), previousDueDate, savedTask.getDueDate());
+    return ApiResponse.success("Task rescheduled", toResponse(savedTask));
+  }
+
+  @GetMapping("/timeline")
+  public ApiResponse<List<TaskHistoryResponse>> timeline(@AuthenticationPrincipal UserAccount userAccount) {
+    return ApiResponse.success(
+        "Task timeline loaded",
+        taskHistoryEventRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId()).stream()
+            .map(this::toHistoryResponse)
+            .toList());
+  }
+
+  @GetMapping("/missed-insights")
+  public ApiResponse<List<MissedTaskInsightResponse>> missedInsights(@AuthenticationPrincipal UserAccount userAccount) {
+    LocalDateTime since = LocalDateTime.now().minusDays(30);
+    return ApiResponse.success(
+        "Missed task insights loaded",
+        Stream.of(MissedTaskReason.values())
+            .map(reason -> new MissedTaskInsightResponse(
+                reason,
+                taskHistoryEventRepository.countByUserIdAndEventTypeAndMissedReasonAndCreatedAtAfter(
+                    userAccount.getId(),
+                    TaskEventType.MISSED,
+                    reason,
+                    since)))
+            .filter(item -> item.count() > 0)
+            .toList());
   }
 
   private CareerTaskResponse toResponse(CareerTask careerTask) {
@@ -161,8 +237,45 @@ public class CareerTaskController {
         careerTask.getCompletedAt(),
         careerTask.getEstimatedDurationMinutes(),
         careerTask.getNotes(),
+        careerTask.getMissedReason(),
+        careerTask.getMissedReasonDetail(),
+        careerTask.getMissedAt(),
+        careerTask.getRescheduledAt(),
+        careerTask.getReminderTimes(),
+        careerTask.isBrowserReminderEnabled(),
         overdue,
         overdue ? "Overdue" : careerTask.getTaskStatus().name());
+  }
+
+  private void saveHistory(
+      UserAccount userAccount,
+      CareerTask careerTask,
+      TaskEventType eventType,
+      MissedTaskReason missedReason,
+      String detail,
+      LocalDate previousDueDate,
+      LocalDate newDueDate) {
+    taskHistoryEventRepository.save(new TaskHistoryEvent(
+        userAccount,
+        careerTask,
+        eventType,
+        missedReason,
+        detail,
+        previousDueDate,
+        newDueDate));
+  }
+
+  private TaskHistoryResponse toHistoryResponse(TaskHistoryEvent event) {
+    return new TaskHistoryResponse(
+        event.getId(),
+        event.getTask().getId(),
+        event.getTask().getTitle(),
+        event.getEventType(),
+        event.getMissedReason(),
+        event.getDetail(),
+        event.getPreviousDueDate(),
+        event.getNewDueDate(),
+        event.getCreatedAt());
   }
 
   private boolean matchesSearch(CareerTask task, String search) {

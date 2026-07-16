@@ -20,5 +20,7 @@ public record CreateTaskRequest(
     TaskStatus status,
     LocalDate dueDate,
     @Min(0) Integer estimatedDurationMinutes,
-    @Size(max = 4000) String notes) {
+    @Size(max = 4000) String notes,
+    @Size(max = 1000) String reminderTimes,
+    Boolean browserReminderEnabled) {
 }

@@ -3,6 +3,7 @@ package com.careeros.plan.entity;
 import com.careeros.common.entity.BaseEntity;
 import com.careeros.common.enums.PriorityLevel;
 import com.careeros.plan.enums.TaskCategory;
+import com.careeros.plan.enums.MissedTaskReason;
 import com.careeros.plan.enums.PlanType;
 import com.careeros.plan.enums.TaskStatus;
 import com.careeros.plan.entity.Plan;
@@ -22,6 +23,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.hibernate.annotations.ColumnDefault;
 
 @Entity
@@ -74,6 +76,22 @@ public class CareerTask extends BaseEntity {
 
   @Column(columnDefinition = "TEXT")
   private String notes;
+
+  @Enumerated(EnumType.STRING)
+  @Column(length = 40)
+  private MissedTaskReason missedReason;
+
+  @Column(columnDefinition = "TEXT")
+  private String missedReasonDetail;
+
+  private LocalDateTime missedAt;
+
+  private LocalDateTime rescheduledAt;
+
+  @Column(columnDefinition = "TEXT")
+  private String reminderTimes;
+
+  private Boolean browserReminderEnabled = false;
 
   protected CareerTask() {
   }
@@ -151,9 +169,36 @@ public class CareerTask extends BaseEntity {
     return notes;
   }
 
+  public MissedTaskReason getMissedReason() { return missedReason; }
+
+  public String getMissedReasonDetail() { return missedReasonDetail; }
+
+  public LocalDateTime getMissedAt() { return missedAt; }
+
+  public LocalDateTime getRescheduledAt() { return rescheduledAt; }
+
+  public String getReminderTimes() { return reminderTimes; }
+
+  public boolean isBrowserReminderEnabled() { return Boolean.TRUE.equals(browserReminderEnabled); }
+
   public void markCompleted(LocalDate completionDate) {
     this.taskStatus = TaskStatus.COMPLETED;
     this.completedAt = completionDate;
+    this.missedReason = null;
+    this.missedReasonDetail = null;
+  }
+
+  public void markMissed(MissedTaskReason reason, String detail) {
+    this.taskStatus = TaskStatus.MISSED;
+    this.missedReason = reason;
+    this.missedReasonDetail = detail;
+    this.missedAt = LocalDateTime.now();
+  }
+
+  public void reschedule(LocalDate newDueDate) {
+    this.taskStatus = TaskStatus.RESCHEDULED;
+    this.dueDate = newDueDate;
+    this.rescheduledAt = LocalDateTime.now();
   }
 
   public void setTaskStatus(TaskStatus taskStatus) {
@@ -189,8 +234,18 @@ public class CareerTask extends BaseEntity {
   }
 
   public void setTitle(@NotBlank @Size(max = 160) String title) {
+    this.title = title;
   }
 
   public void setDescription(@Size(max = 4000) String description) {
+    this.description = description;
+  }
+
+  public void setReminderTimes(String reminderTimes) {
+    this.reminderTimes = reminderTimes;
+  }
+
+  public void setBrowserReminderEnabled(boolean browserReminderEnabled) {
+    this.browserReminderEnabled = browserReminderEnabled;
   }
 }

@@ -3,12 +3,18 @@ package com.careeros.notes.enums;
 public enum NoteCategory {
   JAVA,
   SPRING_BOOT,
+  SQL,
+  ARRAYS,
   DSA,
   DBMS,
   OPERATING_SYSTEM,
   COMPUTER_NETWORKS,
+  APTITUDE,
+  REACT,
   PROJECTS,
   INTERVIEW_NOTES,
+  COMPANY_PREPARATION,
+  HR_QUESTIONS,
+  PERSONAL_NOTES,
   GENERAL_NOTES
 }
-

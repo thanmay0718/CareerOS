@@ -26,6 +26,26 @@ export async function completeTask(taskId) {
   return response.data.data;
 }
 
+export async function missTask(taskId, payload) {
+  const response = await apiClient.patch(`/tasks/${taskId}/missed`, payload);
+  return response.data.data;
+}
+
+export async function rescheduleTask(taskId, payload) {
+  const response = await apiClient.patch(`/tasks/${taskId}/reschedule`, payload);
+  return response.data.data;
+}
+
+export async function fetchTaskTimeline() {
+  const response = await apiClient.get('/tasks/timeline');
+  return response.data.data;
+}
+
+export async function fetchMissedTaskInsights() {
+  const response = await apiClient.get('/tasks/missed-insights');
+  return response.data.data;
+}
+
 export async function deleteTask(taskId) {
   const response = await apiClient.delete(`/tasks/${taskId}`);
   return response.data.data;
