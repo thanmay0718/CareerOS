@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import {
   Activity,
   ArrowRight,
@@ -33,8 +33,10 @@ import {
   WandSparkles,
 } from 'lucide-react';
 import { GlassCard } from '../components/landing/GlassCard';
+import { AiDataHills } from '../components/landing/AiDataHills';
 import { MagneticLink } from '../components/landing/MagneticLink';
 import { SectionHeader } from '../components/landing/SectionHeader';
+import { OrbitGallery } from '../components/ui/3d-orbit-gallery';
 
 const navItems = [
   ['Home', '#home'],
@@ -122,6 +124,185 @@ const faqs = [
   ['Is this responsive?', 'Yes. The page is designed for mobile, tablet, desktop, and wider screens with stable dimensions.'],
   ['Does it support light mode?', 'The global theme variables still support light mode, while the landing page defaults to the premium dark product look.'],
 ];
+
+const heroWidgets = [
+  {
+    title: 'Resume Score',
+    value: '92%',
+    caption: 'ATS Optimized',
+    icon: FileSearch,
+    className: 'lg:left-6 lg:top-28 xl:left-12',
+    delay: 0.1,
+    rotate: -2,
+  },
+  {
+    title: 'Interview AI',
+    value: 'Next Mock Interview',
+    caption: 'Tomorrow - 6 PM',
+    icon: MessageSquareText,
+    className: 'lg:right-8 lg:top-24 xl:right-16',
+    delay: 0.22,
+    rotate: 2,
+  },
+  {
+    title: 'Placement Tracker',
+    value: 'Applications',
+    caption: '18',
+    icon: BriefcaseBusiness,
+    className: 'lg:left-10 lg:bottom-24 xl:left-20',
+    delay: 0.34,
+    rotate: 1.5,
+  },
+  {
+    title: 'Progress',
+    value: '78%',
+    caption: 'Placement Ready',
+    icon: Target,
+    className: 'lg:right-12 lg:bottom-28 xl:right-24',
+    delay: 0.46,
+    rotate: -1.5,
+  },
+];
+
+const skillTags = ['Java', 'React', 'Spring Boot', 'DSA'];
+const heatmapCells = [2, 3, 1, 4, 2, 5, 3, 1, 2, 4, 5, 3, 2, 4, 1, 5, 3, 4, 2, 5, 4, 3, 1, 2, 4, 5, 3, 4];
+
+const orbitCards = [
+  { title: 'Resume Builder', description: 'ATS score, versions, AI fixes' },
+  { title: 'AI Interviews', description: 'Mock rounds and feedback' },
+  { title: 'Placement Tracker', description: 'Applications and deadlines' },
+  { title: 'Study Notes', description: 'Organized learning memory' },
+  { title: 'Skill Roadmaps', description: 'Java, React, Spring Boot, DSA' },
+  { title: 'Progress Analytics', description: 'Readiness and consistency' },
+  { title: 'Daily Planner', description: 'Tasks, habits, reminders' },
+  { title: 'AI Dashboard', description: 'One intelligent command center' },
+];
+
+function HeroWidget({ widget, index }) {
+  const Icon = widget.icon;
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.article
+      className={`hero-floating-card group relative w-full rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl sm:w-64 lg:absolute ${widget.className}`}
+      initial={{ opacity: 0, y: 26, scale: 0.94, rotate: widget.rotate }}
+      animate={
+        shouldReduceMotion
+          ? { opacity: 1, y: 0, scale: 1, rotate: widget.rotate }
+          : {
+              opacity: 1,
+              y: [0, -10 - index * 2, 0],
+              scale: 1,
+              rotate: [widget.rotate, widget.rotate * -0.55, widget.rotate],
+            }
+      }
+      whileHover={{ y: -12, scale: 1.035, rotate: 0 }}
+      transition={{
+        opacity: { duration: 0.65, delay: widget.delay },
+        scale: { duration: 0.65, delay: widget.delay },
+        y: { duration: 6.5 + index, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: widget.delay },
+        rotate: { duration: 7.5 + index, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: widget.delay },
+      }}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold text-slate-400">{widget.title}</p>
+          <p className="mt-2 text-lg font-bold leading-tight text-white">{widget.value}</p>
+        </div>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-indigo-300/20 bg-indigo-500/15 text-indigo-100 shadow-lg shadow-indigo-500/15">
+          <Icon size={18} />
+        </span>
+      </div>
+      <p className={`mt-3 text-sm ${widget.title === 'Placement Tracker' ? 'text-3xl font-extrabold text-white' : 'text-slate-300'}`}>{widget.caption}</p>
+    </motion.article>
+  );
+}
+
+function SkillsWidget() {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.article
+      className="hero-floating-card relative w-full rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl sm:w-72 lg:absolute lg:left-1/2 lg:top-16 lg:-translate-x-1/2"
+      initial={{ opacity: 0, y: 24, scale: 0.94 }}
+      animate={shouldReduceMotion ? { opacity: 1, y: 0, scale: 1, rotate: 0 } : { opacity: 1, y: [0, -12, 0], scale: 1, rotate: [0, 1.2, 0] }}
+      whileHover={{ y: -12, scale: 1.035 }}
+      transition={{
+        opacity: { duration: 0.65, delay: 0.28 },
+        scale: { duration: 0.65, delay: 0.28 },
+        y: { duration: 7.8, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: 0.28 },
+        rotate: { duration: 8.6, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: 0.28 },
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 place-items-center rounded-2xl border border-indigo-300/20 bg-indigo-500/15 text-indigo-100">
+          <Code2 size={18} />
+        </span>
+        <div>
+          <p className="text-xs font-semibold text-slate-400">Skills</p>
+          <p className="text-sm font-bold text-white">Focus stack</p>
+        </div>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {skillTags.map((skill) => (
+          <span key={skill} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-200">
+            {skill}
+          </span>
+        ))}
+      </div>
+    </motion.article>
+  );
+}
+
+function HeatmapWidget() {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.article
+      className="hero-floating-card relative w-full rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl sm:w-72 lg:absolute lg:bottom-14 lg:left-1/2 lg:-translate-x-1/2"
+      initial={{ opacity: 0, y: 26, scale: 0.94 }}
+      animate={shouldReduceMotion ? { opacity: 1, y: 0, scale: 1, rotate: 0 } : { opacity: 1, y: [0, 10, 0], scale: 1, rotate: [0, -1, 0] }}
+      whileHover={{ y: -10, scale: 1.035 }}
+      transition={{
+        opacity: { duration: 0.65, delay: 0.52 },
+        scale: { duration: 0.65, delay: 0.52 },
+        y: { duration: 8.2, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: 0.52 },
+        rotate: { duration: 8.8, repeat: shouldReduceMotion ? 0 : Infinity, ease: 'easeInOut', delay: 0.52 },
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-semibold text-slate-400">Heatmap Preview</p>
+          <p className="mt-1 text-sm font-bold text-white">Study consistency</p>
+        </div>
+        <Activity size={18} className="text-indigo-100" />
+      </div>
+      <div className="mt-4 grid grid-cols-7 gap-1.5" aria-hidden="true">
+        {heatmapCells.map((level, index) => (
+          <span
+            key={`${level}-${index}`}
+            className="h-4 rounded-[5px] border border-white/5"
+            style={{ backgroundColor: `rgba(99, 102, 241, ${0.12 + level * 0.13})` }}
+          />
+        ))}
+      </div>
+    </motion.article>
+  );
+}
+
+function HeroOrbit() {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <div className="hero-orbit-canvas mx-auto mt-8 w-full max-w-5xl" aria-label="Careeros platform modules">
+      <div className="hero-orbit-label">
+        <Sparkles size={18} />
+        <span>Careeros AI Hub</span>
+      </div>
+      <OrbitGallery items={orbitCards} reducedMotion={shouldReduceMotion} />
+    </div>
+  );
+}
 
 function DashboardMockup() {
   return (
@@ -239,9 +420,9 @@ function PricingCard({ plan, index }) {
 
 export default function LandingPage() {
   const [theme, setTheme] = useState(() => localStorage.getItem('careeros-theme') || 'dark');
+  const shouldReduceMotion = useReducedMotion();
   const { scrollY } = useScroll();
   const navPadding = useTransform(scrollY, [0, 120], [18, 10]);
-  const heroY = useTransform(scrollY, [0, 500], [0, 46]);
 
   const particles = useMemo(
     () => Array.from({ length: 18 }, (_, index) => ({ id: index, left: `${(index * 37) % 100}%`, top: `${(index * 23) % 80}%` })),
@@ -269,16 +450,16 @@ export default function LandingPage() {
       </div>
 
       <motion.header
-        className="sticky top-0 z-40 border-b border-white/10 bg-black/35 backdrop-blur-2xl"
+        className="sticky top-0 z-40 border-b border-white/10 bg-black/80 backdrop-blur-2xl"
         style={{ paddingTop: navPadding, paddingBottom: navPadding }}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-3" aria-label="AI Placement OS home">
+          <Link to="/" className="flex items-center gap-3" aria-label="Careeros home">
             <span className="grid h-10 w-10 place-items-center rounded-2xl border border-cyan-200/20 bg-cyan-300/10 text-cyan-100">
               <Sparkles size={19} />
             </span>
             <span>
-              <span className="block font-bold text-white">AI Placement OS</span>
+              <span className="block font-bold text-white">Careeros</span>
               <span className="block text-xs text-slate-400">Career growth workspace</span>
             </span>
           </Link>
@@ -311,60 +492,73 @@ export default function LandingPage() {
         </div>
       </motion.header>
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-78px)] max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
-        <motion.div style={{ y: heroY }}>
-          <motion.p
-            className="stitch-badge inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55 }}
-          >
-            <Sparkles size={14} />
-            The operating system for your placement journey
-          </motion.p>
-          <motion.h1
-            className="mt-7 max-w-5xl text-5xl font-bold leading-[1.02] text-white sm:text-6xl lg:text-7xl"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.08 }}
-          >
-            Your AI Operating System for Placements, Learning & Career Growth
-          </motion.h1>
-          <motion.p
-            className="mt-6 max-w-2xl whitespace-pre-line text-lg leading-8 text-slate-300"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.16 }}
-          >
-            {'Track every goal.\nMaster every interview.\nBuild a job-winning resume.\nPrepare smarter using AI.\nEverything in one intelligent workspace.'}
-          </motion.p>
-          <motion.div
-            className="mt-9 flex flex-wrap gap-3"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.24 }}
-          >
-            <MagneticLink to="/register">
-              Start Your Journey
-              <ArrowRight size={17} />
-            </MagneticLink>
-            <MagneticLink to="/login" variant="secondary">
-              Explore Dashboard
-            </MagneticLink>
-          </motion.div>
-          <div className="mt-10">
-            <p className="text-xs font-semibold uppercase text-slate-500">Trusted by</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              {trustedBy.map((item) => (
-                <span key={item} className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-sm text-slate-300">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
+      <section className="careeros-hero relative z-10 min-h-[calc(100vh-78px)] overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
+        <AiDataHills className="absolute inset-0 z-0 opacity-35" />
+        <div aria-hidden="true" className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_18%,rgba(255,255,255,0.10),transparent_28%),linear-gradient(180deg,rgba(0,0,0,0.84)_0%,rgba(0,0,0,0.70)_42%,rgba(0,0,0,0.96)_100%)]" />
+        <div aria-hidden="true" className="absolute inset-x-0 top-0 z-[1] h-56 bg-gradient-to-b from-black via-black/90 to-transparent" />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 z-[1] h-44 bg-gradient-to-t from-black to-transparent" />
 
-        <DashboardMockup />
+        <div className="relative z-10 mx-auto grid min-h-[calc(100vh-142px)] max-w-7xl grid-rows-[auto_minmax(280px,1fr)] items-center">
+          <motion.div
+            className="mx-auto max-w-5xl pt-4 text-center"
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: shouldReduceMotion ? 0 : 0.1, delayChildren: 0.08 },
+              },
+            }}
+          >
+            <motion.p
+              className="stitch-badge inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold shadow-2xl shadow-indigo-500/10 sm:text-sm"
+              variants={{
+                hidden: { opacity: 0, y: 18 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+              }}
+            >
+              <Sparkles size={15} />
+              AI Powered Career Growth Platform
+            </motion.p>
+            <motion.h1
+              className="mx-auto mt-7 max-w-5xl text-4xl font-semibold leading-[1.03] text-white sm:text-6xl lg:text-7xl xl:text-[5.4rem]"
+              variants={{
+                hidden: { opacity: 0, y: 26 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.75, ease: 'easeOut' } },
+              }}
+            >
+              Build Your Career with AI.
+              <span className="block text-white">Land Your Dream Job Faster.</span>
+            </motion.h1>
+            <motion.p
+              className="mx-auto mt-5 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg"
+              variants={{
+                hidden: { opacity: 0, y: 26 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.75, ease: 'easeOut' } },
+              }}
+            >
+              Create ATS-friendly resumes, practice AI interviews, manage notes, track placements, analyze progress, and prepare smarter - all from one intelligent dashboard.
+            </motion.p>
+            <motion.div
+              className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              variants={{
+                hidden: { opacity: 0, y: 26 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.75, ease: 'easeOut' } },
+              }}
+            >
+              <MagneticLink to="/register" className="hero-cta w-full sm:w-auto">
+                Get Started
+                <ArrowRight size={17} />
+              </MagneticLink>
+              <MagneticLink to="#features" variant="secondary" className="hero-cta w-full sm:w-auto">
+                Explore Features
+              </MagneticLink>
+            </motion.div>
+          </motion.div>
+
+          <HeroOrbit />
+        </div>
       </section>
 
       <section className="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -580,7 +774,7 @@ export default function LandingPage() {
       <footer className="relative z-10 border-t border-white/10 px-4 py-12 text-sm text-slate-400 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.4fr_2fr]">
           <div>
-            <div className="font-bold text-white">AI Placement OS</div>
+            <div className="font-bold text-white">Careeros</div>
             <p className="mt-3 max-w-sm leading-6">AI-powered career growth, placement preparation, and productivity in one unified ecosystem.</p>
             <div className="mt-5 flex gap-3">
               {[Github, Linkedin, Twitter].map((Icon, index) => (

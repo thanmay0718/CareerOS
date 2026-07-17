@@ -49,3 +49,15 @@ export async function fetchAnalyticsStory() {
   const response = await apiClient.get('/analytics/story');
   return response.data.data;
 }
+
+export async function fetchLearningHeatmap(year) {
+  const response = await apiClient.get('/analytics/heatmap', {
+    params: year ? { year } : undefined,
+  });
+  return response.data.data;
+}
+
+export async function fetchLearningHeatmapDay(date) {
+  const response = await apiClient.get(`/analytics/heatmap/${date}`);
+  return response.data.data;
+}

@@ -2,6 +2,8 @@ package com.careeros.analytics.service;
 
 import com.careeros.analytics.dto.AnalyticsOverviewResponse;
 import com.careeros.analytics.dto.CheckInAnalyticsResponse;
+import com.careeros.analytics.dto.LearningHeatmapDayDetailResponse;
+import com.careeros.analytics.dto.LearningHeatmapResponse;
 import com.careeros.analytics.dto.PlanAnalyticsResponse;
 import com.careeros.analytics.dto.ProductivityAnalyticsResponse;
 import com.careeros.analytics.dto.StudyAnalyticsResponse;
@@ -33,4 +35,8 @@ public interface AnalyticsService {
   ProductivityAnalyticsResponse getProductivityAnalytics(UserAccount userAccount);
 
   AnalyticsStoryResponse getStory(UserAccount userAccount);
+
+  LearningHeatmapResponse getLearningHeatmap(UserAccount userAccount, Integer year);
+
+  LearningHeatmapDayDetailResponse getLearningHeatmapDay(UserAccount userAccount, java.time.LocalDate date);
 }

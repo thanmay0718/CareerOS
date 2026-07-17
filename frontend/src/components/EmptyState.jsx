@@ -1,9 +1,15 @@
 import { Inbox } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export function EmptyState({ title, description, actionLabel, onActionClick }) {
   return (
-    <div className="stitch-panel rounded-2xl border-dashed p-6 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-sky-300 shadow-glow">
+    <motion.div
+      className="stitch-panel rounded-2xl border-dashed p-7 text-center"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.22 }}
+    >
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-300/25 bg-indigo-500/15 text-sky-300 shadow-glow">
         <Inbox size={26} />
       </div>
       <h3 className="mt-4 font-display text-lg font-bold text-white">{title}</h3>
@@ -18,6 +24,6 @@ export function EmptyState({ title, description, actionLabel, onActionClick }) {
           {actionLabel}
         </button>
       ) : null}
-    </div>
+    </motion.div>
   );
 }

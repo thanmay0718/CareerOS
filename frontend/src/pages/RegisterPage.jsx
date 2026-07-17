@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Sparkles } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Sparkles, WandSparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiAlert } from '../components/ApiAlert';
 import { Spinner } from '../components/Spinner';
@@ -47,7 +48,13 @@ export default function RegisterPage() {
 
   return (
     <main className="grid min-h-screen place-items-center bg-career-grid px-4 py-10 text-slate-100">
-      <div className="liquid-glass w-full max-w-md rounded-2xl p-6">
+      <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[0.82fr_1fr]">
+      <motion.div
+        className="liquid-glass w-full rounded-[2rem] p-6 sm:p-8"
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28 }}
+      >
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200">
             <Sparkles size={14} />
@@ -128,9 +135,9 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="stitch-button inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
+            className="stitch-button inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isSubmitting ? <Spinner label="Creating account" /> : 'Create account'}
+            {isSubmitting ? <Spinner label="Creating account" /> : <>Create account <ArrowRight size={16} /></>}
           </button>
         </form>
 
@@ -149,6 +156,31 @@ export default function RegisterPage() {
             Sign in
           </Link>
         </p>
+      </motion.div>
+
+      <motion.section
+        className="stitch-panel stitch-hero hidden rounded-[2rem] p-8 lg:flex lg:flex-col lg:justify-between"
+        initial={{ opacity: 0, x: 18 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.32 }}
+      >
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-100">
+            <WandSparkles size={14} />
+            AI-first preparation
+          </div>
+          <h2 className="mt-7 max-w-xl text-5xl font-bold leading-tight text-white">Build a placement workspace that compounds every day.</h2>
+          <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">Create your command center for roadmaps, resumes, company tracking, habits, and analytics with a premium dark interface from the first session.</p>
+        </div>
+        <div className="mt-10 space-y-3">
+          {['Generate guided roadmaps', 'Track applications and practice', 'Turn activity into analytics'].map((item) => (
+            <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] p-4 text-sm font-semibold text-slate-200">
+              <span className="h-2.5 w-2.5 rounded-full bg-indigo-300 shadow-[0_0_18px_rgba(99,102,241,0.8)]" />
+              {item}
+            </div>
+          ))}
+        </div>
+      </motion.section>
       </div>
     </main>
   );

@@ -81,5 +81,10 @@ public class LearningTopic extends BaseEntity {
     this.category = category;
     this.title = title;
   }
-}
 
+  public Long getId() { return id; }
+  public LearningCategory getCategory() { return category; }
+  public String getTitle() { return title; }
+  public LearningStatus getLearningStatus() { return status; }
+  public LocalDate getCompletionDate() { return completionDate; }
+}

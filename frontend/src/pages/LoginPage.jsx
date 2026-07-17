@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Sparkles } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiAlert } from '../components/ApiAlert';
 import { Spinner } from '../components/Spinner';
@@ -39,7 +40,37 @@ export default function LoginPage() {
 
   return (
     <main className="grid min-h-screen place-items-center bg-career-grid px-4 py-10 text-slate-100">
-      <div className="liquid-glass w-full max-w-md rounded-2xl p-6">
+      <div className="grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_0.82fr]">
+        <motion.section
+          className="stitch-panel stitch-hero hidden rounded-[2rem] p-8 lg:flex lg:flex-col lg:justify-between"
+          initial={{ opacity: 0, x: -18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.32 }}
+        >
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-100">
+              <ShieldCheck size={14} />
+              Enterprise AI workspace
+            </div>
+            <h2 className="mt-7 max-w-xl text-5xl font-bold leading-tight text-white">A calmer command center for every placement decision.</h2>
+            <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">Resume, roadmap, practice, analytics, and daily focus signals come together in one premium operating surface.</p>
+          </div>
+          <div className="mt-10 grid grid-cols-3 gap-3">
+            {['AI Readiness', 'Live Tasks', 'Smart Analytics'].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+                <div className="h-2 w-10 rounded-full bg-indigo-300/60" />
+                <div className="mt-4 text-sm font-semibold text-white">{item}</div>
+              </div>
+            ))}
+          </div>
+        </motion.section>
+
+        <motion.div
+          className="liquid-glass w-full rounded-[2rem] p-6 sm:p-8"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
+        >
         <div className="mb-6">
           <Link to="/" className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-200">
             <Sparkles size={14} />
@@ -99,9 +130,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="stitch-button inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
+            className="stitch-button inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isSubmitting ? <Spinner label="Signing in" /> : 'Sign in'}
+            {isSubmitting ? <Spinner label="Signing in" /> : <>Sign in <ArrowRight size={16} /></>}
           </button>
         </form>
 
@@ -120,6 +151,7 @@ export default function LoginPage() {
             Register
           </Link>
         </p>
+        </motion.div>
       </div>
     </main>
   );

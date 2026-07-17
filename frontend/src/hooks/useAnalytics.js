@@ -10,6 +10,8 @@ import {
   fetchAnalyticsTasks,
   fetchDashboardActivity,
   fetchDashboardStatistics,
+  fetchLearningHeatmap,
+  fetchLearningHeatmapDay,
 } from '../api/analytics';
 
 export function useDashboardActivity() {
@@ -89,5 +91,23 @@ export function useAnalyticsStory() {
     queryKey: ['analytics', 'story'],
     queryFn: fetchAnalyticsStory,
     staleTime: 30 * 1000,
+  });
+}
+
+export function useLearningHeatmap(year) {
+  return useQuery({
+    queryKey: ['analytics', 'learning-heatmap', year],
+    queryFn: () => fetchLearningHeatmap(year),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}
+
+export function useLearningHeatmapDay(date, enabled = true) {
+  return useQuery({
+    queryKey: ['analytics', 'learning-heatmap-day', date],
+    queryFn: () => fetchLearningHeatmapDay(date),
+    enabled: Boolean(date) && enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -35,11 +36,11 @@ const navigationItems = [
 
 function navClass({ isActive }, collapsed) {
   return [
-    'group flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-medium transition',
+    'group relative flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-medium transition duration-200',
     collapsed ? 'justify-center' : '',
     isActive
-      ? 'bg-indigo-500/15 text-white ring-1 ring-indigo-300/30'
-      : 'text-slate-400 hover:bg-white/[0.06] hover:text-white',
+      ? 'bg-indigo-500/15 text-white shadow-[0_0_28px_rgba(99,102,241,0.16)] ring-1 ring-indigo-300/30 before:absolute before:left-0 before:h-5 before:w-1 before:rounded-full before:bg-indigo-300'
+      : 'text-slate-400 hover:bg-white/[0.06] hover:text-white hover:shadow-[0_0_22px_rgba(99,102,241,0.08)]',
   ].join(' ');
 }
 
@@ -83,6 +84,12 @@ export function AppLayout() {
         event.preventDefault();
         setCommandOpen((value) => !value);
       }
+
+      if (event.key === 'Escape') {
+        setCommandOpen(false);
+        setNotificationsOpen(false);
+        setMobileOpen(false);
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -115,19 +122,24 @@ export function AppLayout() {
   };
 
   const sidebar = (
-    <aside className={[
-      'liquid-glass flex h-full flex-col rounded-2xl p-3 transition-all duration-200',
+    <motion.aside
+      className={[
+      'liquid-glass flex h-full flex-col rounded-[1.5rem] p-3 transition-all duration-200',
       collapsed ? 'lg:w-[84px]' : 'lg:w-[260px]',
-    ].join(' ')}>
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3">
+    ].join(' ')}
+      initial={{ opacity: 0, x: -14 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.28, ease: 'easeOut' }}
+    >
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-indigo-500/15 text-indigo-100">
             <Command size={20} />
           </div>
           {!collapsed ? (
             <div className="min-w-0">
-              <div className="truncate text-sm font-bold text-white">CareerOS</div>
-              <div className="truncate text-xs text-slate-400">Career operating system</div>
+              <div className="truncate text-sm font-bold text-white">Careeros</div>
+              <div className="truncate text-xs text-slate-400">AI career workspace</div>
             </div>
           ) : null}
         </div>
@@ -141,15 +153,17 @@ export function AppLayout() {
         </button>
       </div>
 
-      <button
+      <motion.button
         type="button"
         onClick={() => setCommandOpen(true)}
         className={['mt-3 flex h-11 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-left text-slate-400 transition hover:text-white', collapsed ? 'justify-center' : ''].join(' ')}
         aria-label="Search workspace"
+        whileHover={{ y: -1 }}
+        whileTap={{ scale: 0.98 }}
       >
         <Search size={16} />
         {!collapsed ? <span className="text-xs">Search workspace</span> : null}
-      </button>
+      </motion.button>
 
       <nav className="mt-4 flex-1 overflow-y-auto pr-1" aria-label="Primary navigation">
         <div className="space-y-1">
@@ -171,7 +185,7 @@ export function AppLayout() {
         </div>
       </nav>
 
-      <div className="mt-4">
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-2">
         <button
           type="button"
           onClick={() => setCollapsed((value) => !value)}
@@ -182,24 +196,41 @@ export function AppLayout() {
           {!collapsed ? 'Collapse' : null}
         </button>
       </div>
-    </aside>
+    </motion.aside>
   );
 
   return (
     <div className="min-h-full bg-career-grid text-slate-100">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[8%] top-[14%] h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="absolute right-[6%] top-[8%] h-80 w-80 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="absolute bottom-[4%] left-[38%] h-96 w-96 rounded-full bg-indigo-500/10 blur-3xl" />
+      </div>
       <div className="mx-auto flex min-h-full max-w-[1520px] gap-4 px-3 py-3 md:px-5 md:py-5">
         <div className="hidden shrink-0 lg:sticky lg:top-5 lg:block lg:h-[calc(100vh-2.5rem)]">
           {sidebar}
         </div>
 
+        <AnimatePresence>
         {mobileOpen ? (
-          <div className="fixed inset-0 z-50 bg-slate-950/70 p-3 backdrop-blur lg:hidden">
+          <motion.div
+            className="fixed inset-0 z-50 bg-slate-950/70 p-3 backdrop-blur lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             {sidebar}
-          </div>
+          </motion.div>
         ) : null}
+        </AnimatePresence>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="liquid-glass sticky top-3 z-30 rounded-2xl px-3 py-3">
+          <motion.header
+            className="liquid-glass sticky top-3 z-30 rounded-[1.5rem] px-3 py-3"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24 }}
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <button
@@ -216,7 +247,7 @@ export function AppLayout() {
                   className="hidden h-10 min-w-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 text-left text-sm text-slate-400 transition hover:text-white md:flex"
                 >
                   <Command size={16} />
-                  <span className="w-44 truncate lg:w-64">Search CareerOS</span>
+                  <span className="w-44 truncate lg:w-64">Search Careeros</span>
                   <kbd className="rounded-lg border border-white/10 px-2 py-1 text-[11px] text-slate-500">Ctrl K</kbd>
                 </button>
               </div>
@@ -264,17 +295,36 @@ export function AppLayout() {
                 </button>
               </div>
             </div>
-          </header>
+          </motion.header>
 
-          <section className="min-w-0 flex-1 py-4">
+          <motion.section
+            className="min-w-0 flex-1 py-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.24, delay: 0.04 }}
+          >
             <Outlet />
-          </section>
+          </motion.section>
         </div>
       </div>
 
+      <AnimatePresence>
       {commandOpen ? (
-        <div className="fixed inset-0 z-[70] grid place-items-start bg-slate-950/65 px-3 pt-20 backdrop-blur-md" role="dialog" aria-modal="true">
-          <div className="liquid-glass mx-auto w-full max-w-2xl rounded-2xl p-3">
+        <motion.div
+          className="fixed inset-0 z-[70] grid place-items-start bg-slate-950/65 px-3 pt-20 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="liquid-glass mx-auto w-full max-w-2xl rounded-[1.5rem] p-3"
+            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+          >
             <div className="flex items-center gap-3 border-b border-white/10 px-3 pb-3">
               <Command size={18} className="text-indigo-200" />
               <input
@@ -306,13 +356,28 @@ export function AppLayout() {
                 <div className="px-3 py-6 text-center text-sm text-slate-400">No matching modules.</div>
               )}
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {notificationsOpen ? (
-        <div className="fixed inset-0 z-[65] bg-slate-950/55 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <aside className="liquid-glass ml-auto flex h-full w-full max-w-md flex-col rounded-none p-4 sm:rounded-l-2xl">
+        <motion.div
+          className="fixed inset-0 z-[65] bg-slate-950/55 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.aside
+            className="liquid-glass ml-auto flex h-full w-full max-w-md flex-col rounded-none p-4 sm:rounded-l-2xl"
+            initial={{ x: 420 }}
+            animate={{ x: 0 }}
+            exit={{ x: 420 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+          >
             <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
                 <div className="text-xs font-semibold text-indigo-200">Notification center</div>
@@ -366,9 +431,10 @@ export function AppLayout() {
                 </div>
               )}
             </div>
-          </aside>
-        </div>
+          </motion.aside>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }
