@@ -87,15 +87,17 @@ public class AnalyticsServiceImpl implements AnalyticsService {
   @Override
   @Transactional(readOnly = true)
   public List<DashboardStat> getDashboardStatistics(UserAccount userAccount) {
+    LocalDate today = LocalDate.now(ZoneId.systemDefault());
     TaskStatisticsSnapshot taskSnapshot = taskSnapshot(userAccount);
     PlanStatisticsSnapshot planSnapshot = planSnapshot(userAccount);
+    long streak = Math.max(taskSnapshot.currentStreak(), currentLearningStreakForUser(userAccount, today));
     return List.of(
         new DashboardStat("Total Tasks", String.valueOf(taskSnapshot.totalTasks()), false),
         new DashboardStat("Completed Tasks", String.valueOf(taskSnapshot.completedTasks()), true),
         new DashboardStat("Overdue Tasks", String.valueOf(taskSnapshot.overdueTasks()), false),
         new DashboardStat("Active Plans", String.valueOf(planSnapshot.activePlans()), true),
         new DashboardStat("Completion Rate", formatPercent(taskSnapshot.completionRate()), true),
-        new DashboardStat("Current Streak", taskSnapshot.currentStreak() + " days", true));
+        new DashboardStat("Current Streak", streak + " days", true));
   }
 
   @Override
@@ -111,11 +113,23 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     List<CareerTask> tasks = careerTaskRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
     List<Plan> plans = planRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
     List<DailyCheckIn> checkIns = dailyCheckInRepository.findByUserIdOrderByCheckInDateDesc(userAccount.getId());
+    List<FocusSession> focusSessions = focusSessionRepository.findByUserIdOrderByCompletedAtDesc(userAccount.getId());
+    List<KnowledgeNote> notes = knowledgeNoteRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<LearningTopic> topics = learningTopicRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
 
     TaskStatisticsSnapshot taskSnapshot = taskSnapshot(tasks, checkIns, today);
     PlanStatisticsSnapshot planSnapshot = planSnapshot(plans);
     List<ActivityPointResponse> weeklyActivity = buildActivitySeries(tasks, plans, checkIns, today.minusDays(6), today);
     List<ActivityPointResponse> monthlyActivity = buildActivitySeries(tasks, plans, checkIns, today.minusDays(29), today);
+    long learningStreak = currentLearningStreak(today, buildLearningHeatmapDays(
+        tasks,
+        plans,
+        checkIns,
+        focusSessions,
+        notes,
+        topics,
+        today.minusDays(364),
+        today));
     StudyHoursResponse studyHours = new StudyHoursResponse(
         studyHoursFor(checkIns, today),
         studyHoursBetween(checkIns, today.minusDays(6), today),
@@ -141,7 +155,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         monthlyActivity,
         studyHours,
         taskSnapshot.completionRate(),
-        taskSnapshot.currentStreak());
+        Math.max(taskSnapshot.currentStreak(), learningStreak));
   }
 
   @Override
@@ -320,7 +334,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     long totalMinutes = days.stream().mapToLong(HeatmapDayResponse::studyMinutes).sum();
     long totalSessions = days.stream().mapToLong(HeatmapDayResponse::checkIns).sum();
     long longestStreak = longestStreak(days);
-    long currentStreak = selectedYear == today.getYear() ? calculateStreak(today, checkIns) : streakEndingAt(endDate, days);
+    long currentStreak = selectedYear == today.getYear() ? currentLearningStreak(today, days) : streakEndingAt(endDate, days);
     long elapsedDays = selectedYear == today.getYear()
         ? ChronoUnit.DAYS.between(startDate, today.plusDays(1))
         : ChronoUnit.DAYS.between(startDate, endDate.plusDays(1));
@@ -470,7 +484,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         });
 
     long streak = 0;
-    for (Map.Entry<LocalDate, LearningDayAccumulator> entry : buckets.entrySet()) {
+    for (Map.Entry<LocalDate, LearningDayAccumulator> entry : buckets.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
       LearningDayAccumulator bucket = entry.getValue();
       boolean active = bucket.studyMinutes > 0 || bucket.tasksCompleted > 0 || bucket.completedConcepts > 0 || bucket.notesCreated > 0;
       streak = active ? streak + 1 : 0;
@@ -631,6 +645,41 @@ public class AnalyticsServiceImpl implements AnalyticsService {
       cursor = cursor.minusDays(1);
     }
     return streak;
+  }
+
+  private long currentLearningStreak(LocalDate today, List<HeatmapDayResponse> days) {
+    LocalDate latestActiveDate = days.stream()
+        .filter(this::isActiveLearningDay)
+        .map(HeatmapDayResponse::date)
+        .filter(date -> !date.isAfter(today))
+        .max(LocalDate::compareTo)
+        .orElse(null);
+    if (latestActiveDate == null) {
+      return 0;
+    }
+    return streakEndingAt(latestActiveDate, days);
+  }
+
+  private long currentLearningStreakForUser(UserAccount userAccount, LocalDate today) {
+    List<CareerTask> tasks = careerTaskRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<Plan> plans = planRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<DailyCheckIn> checkIns = dailyCheckInRepository.findByUserIdOrderByCheckInDateDesc(userAccount.getId());
+    List<FocusSession> focusSessions = focusSessionRepository.findByUserIdOrderByCompletedAtDesc(userAccount.getId());
+    List<KnowledgeNote> notes = knowledgeNoteRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    List<LearningTopic> topics = learningTopicRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId());
+    return currentLearningStreak(today, buildLearningHeatmapDays(
+        tasks,
+        plans,
+        checkIns,
+        focusSessions,
+        notes,
+        topics,
+        today.minusDays(364),
+        today));
+  }
+
+  private boolean isActiveLearningDay(HeatmapDayResponse day) {
+    return day.studyMinutes() > 0 || day.tasksCompleted() > 0 || day.completedConcepts() > 0 || day.notesCreated() > 0;
   }
 
   private List<String> buildDayAchievements(HeatmapDayResponse day) {
@@ -820,8 +869,15 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     if (activeDates.isEmpty()) {
       return 0;
     }
+    LocalDate latestActiveDate = activeDates.stream()
+        .filter(date -> !date.isAfter(today))
+        .max(LocalDate::compareTo)
+        .orElse(null);
+    if (latestActiveDate == null) {
+      return 0;
+    }
     long streak = 0;
-    LocalDate cursor = today;
+    LocalDate cursor = latestActiveDate;
     while (activeDates.contains(cursor)) {
       streak++;
       cursor = cursor.minusDays(1);

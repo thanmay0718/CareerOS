@@ -44,8 +44,11 @@ public class RewardService {
     long completedTasks = tasks.stream().filter(task -> task.getTaskStatus() == TaskStatus.COMPLETED).count();
     LocalDate today = LocalDate.now(ZoneId.systemDefault());
     long currentStreak = calculateStreak(today, checkIns);
+    UserRewardProfile profile = rewardProfileRepository.findByUserId(userAccount.getId())
+        .orElseGet(() -> new UserRewardProfile(userAccount));
 
-    long coins = checkIns.size() * 2L
+    long coins = profile.getLoginCoins()
+        + checkIns.size() * 2L
         + completedTasks * 5L
         + (completedTasks / 5L) * 20L
         + notes * 3L
@@ -64,8 +67,6 @@ public class RewardService {
         .orElse(0d);
     int weeklyImprovement = weeklyImprovement(today, checkIns);
 
-    UserRewardProfile profile = rewardProfileRepository.findByUserId(userAccount.getId())
-        .orElseGet(() -> new UserRewardProfile(userAccount));
     profile.update(coins, xp, productivityScore);
     UserRewardProfile saved = rewardProfileRepository.save(profile);
     return toResponse(saved, completionRate, consistencyScore, focusHoursToday, weeklyImprovement, achievements(completedTasks, currentStreak, checkIns, notes));
@@ -115,8 +116,15 @@ public class RewardService {
 
   private long calculateStreak(LocalDate today, List<DailyCheckIn> checkIns) {
     List<LocalDate> activeDates = checkIns.stream().map(DailyCheckIn::getCheckInDate).toList();
+    LocalDate latestActiveDate = activeDates.stream()
+        .filter(date -> !date.isAfter(today))
+        .max(LocalDate::compareTo)
+        .orElse(null);
+    if (latestActiveDate == null) {
+      return 0;
+    }
     long streak = 0;
-    LocalDate cursor = today;
+    LocalDate cursor = latestActiveDate;
     while (activeDates.contains(cursor)) {
       streak++;
       cursor = cursor.minusDays(1);

@@ -166,6 +166,7 @@ export default function TasksPage() {
   const [missedTask, setMissedTask] = useState(null);
   const [missedReason, setMissedReason] = useState('FORGOT');
   const [missedDetail, setMissedDetail] = useState('');
+  const [showAllTaskHistory, setShowAllTaskHistory] = useState(false);
 
   const tasksQuery = useTasks(filters);
   const timelineQuery = useTaskTimeline();
@@ -293,6 +294,8 @@ export default function TasksPage() {
 
   const totalPages = taskPage?.totalPages ?? 0;
   const currentPage = taskPage?.page ?? 0;
+  const taskHistoryItems = timelineQuery.data ?? [];
+  const visibleTaskHistoryItems = showAllTaskHistory ? taskHistoryItems : taskHistoryItems.slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -666,9 +669,9 @@ export default function TasksPage() {
         <SectionCard title="Task history timeline">
           {timelineQuery.isLoading ? (
             <Spinner label="Loading task history" />
-          ) : timelineQuery.data?.length ? (
+          ) : taskHistoryItems.length ? (
             <div className="space-y-3">
-              {timelineQuery.data.slice(0, 12).map((event) => (
+              {visibleTaskHistoryItems.map((event) => (
                 <article key={event.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <div className="flex items-start gap-3">
                     <div className="mt-1 grid h-8 w-8 place-items-center rounded-2xl bg-indigo-500/15 text-indigo-100">
@@ -686,6 +689,15 @@ export default function TasksPage() {
                   </div>
                 </article>
               ))}
+              {taskHistoryItems.length > visibleTaskHistoryItems.length ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTaskHistory(true)}
+                  className="stitch-button-secondary w-full rounded-full px-4 py-2 text-sm font-semibold"
+                >
+                  Show more
+                </button>
+              ) : null}
             </div>
           ) : (
             <EmptyState title="No task history yet" description="Completed, missed, updated, and rescheduled task events will appear here." />

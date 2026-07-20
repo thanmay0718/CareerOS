@@ -68,6 +68,16 @@ export function AuthProvider({ children }) {
 
   async function login(payload) {
     const response = await loginUser(payload);
+    if (response.dailyLoginCoinAwarded) {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('careeros-login-reward', JSON.stringify({
+        coins: response.dailyLoginCoinsAwarded ?? 1,
+        userId: response.userId,
+        email: response.email,
+        awardedDate: today,
+        awardedAt: Date.now(),
+      }));
+    }
     const nextSession = buildSession(response, response.accessToken, response.expiresInMs);
     setSession(nextSession);
     return response;
@@ -110,4 +120,3 @@ export function useAuth() {
 
   return context;
 }
-

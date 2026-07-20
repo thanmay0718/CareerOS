@@ -7,6 +7,7 @@ import { Spinner } from '../components/Spinner';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage'));
+const AboutPage = lazy(() => import('../pages/AboutPage'));
 const PlansPage = lazy(() => import('../pages/PlansPage'));
 const TasksPage = lazy(() => import('../pages/TasksPage'));
 const CheckInsPage = lazy(() => import('../pages/CheckInsPage'));
@@ -48,6 +49,7 @@ export function AppRouter() {
             <Route path="/notes" element={<NotesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/plans" element={<PlansPage />} />
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/check-ins" element={<CheckInsPage />} />

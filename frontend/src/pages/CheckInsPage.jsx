@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Battery, Flame, Smile, Sparkles, Star } from 'lucide-react';
 import { ApiAlert } from '../components/ApiAlert';
@@ -43,6 +43,7 @@ function moodLabel(value) {
 }
 
 export default function CheckInsPage() {
+  const [showAllCheckIns, setShowAllCheckIns] = useState(false);
   const todayCheckInQuery = useTodayCheckIn();
   const recentCheckInsQuery = useRecentCheckIns();
   const rewardProfileQuery = useRewardProfile();
@@ -100,6 +101,7 @@ export default function CheckInsPage() {
   };
 
   const recentCheckIns = recentCheckInsQuery.data ?? [];
+  const visibleCheckIns = showAllCheckIns ? recentCheckIns : recentCheckIns.slice(0, 3);
   const rewards = rewardProfileQuery.data;
 
   return (
@@ -147,7 +149,28 @@ export default function CheckInsPage() {
       <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
         <SectionCard title="How productive were you today?">
           {todayCheckInQuery.isError ? (
-            <ApiAlert title="Unable to load today's check-in" description={getApiErrorMessage(todayCheckInQuery.error)} onRetry={todayCheckInQuery.refetch} />
+            <div className="mb-5 overflow-hidden rounded-2xl border border-indigo-200/[0.18] bg-[linear-gradient(135deg,rgba(99,102,241,0.18),rgba(255,255,255,0.055)_48%,rgba(56,189,248,0.10))] p-5 text-left shadow-[0_18px_54px_rgba(99,102,241,0.14)] backdrop-blur-xl">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-indigo-200/[0.18] bg-indigo-500/[0.16] text-indigo-100 shadow-[0_0_24px_rgba(99,102,241,0.22)]">
+                    <Sparkles size={19} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Ready when you are</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-300">
+                      I could not find today&apos;s saved check-in yet. Tell me how your day went and I&apos;ll sync it for you.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={todayCheckInQuery.refetch}
+                  className="shrink-0 rounded-full border border-indigo-200/20 bg-white/[0.055] px-4 py-2 text-sm font-semibold text-indigo-100 transition hover:bg-indigo-500/15 hover:text-white"
+                >
+                  Sync again
+                </button>
+              </div>
+            </div>
           ) : null}
           {saveTodayCheckInMutation.isError ? (
             <div className="mb-4">
@@ -260,7 +283,7 @@ export default function CheckInsPage() {
             <Spinner label="Loading check-ins" />
           ) : recentCheckIns.length ? (
             <div className="space-y-4">
-              {recentCheckIns.map((checkIn) => (
+              {visibleCheckIns.map((checkIn) => (
                 <article key={checkIn.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -286,6 +309,15 @@ export default function CheckInsPage() {
                   </div>
                 </article>
               ))}
+              {recentCheckIns.length > visibleCheckIns.length ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllCheckIns(true)}
+                  className="stitch-button-secondary w-full rounded-full px-4 py-2 text-sm font-semibold"
+                >
+                  Show more
+                </button>
+              ) : null}
             </div>
           ) : (
             <EmptyState title="No check-ins yet" description="Log today's study progress to start building consistency data." actionLabel="Fill today's check-in" onActionClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />

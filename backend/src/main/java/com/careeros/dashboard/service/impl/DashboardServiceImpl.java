@@ -409,8 +409,16 @@ public class DashboardServiceImpl implements DashboardService {
       return 0;
     }
 
+    LocalDate latestActiveDate = activeDates.stream()
+        .filter(date -> !date.isAfter(today))
+        .max(LocalDate::compareTo)
+        .orElse(null);
+    if (latestActiveDate == null) {
+      return 0;
+    }
+
     long streak = 0;
-    LocalDate cursor = today;
+    LocalDate cursor = latestActiveDate;
     while (activeDates.contains(cursor)) {
       streak++;
       cursor = cursor.minusDays(1);

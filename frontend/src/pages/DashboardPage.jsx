@@ -3,17 +3,19 @@ import {
   BarChart3,
   CalendarClock,
   CheckCircle2,
-  Clock3,
   Compass,
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiAlert } from '../components/ApiAlert';
+import { DashboardGradientCard } from '../components/DashboardGradientCard';
 import { EmptyState } from '../components/EmptyState';
 import { SectionCard } from '../components/SectionCard';
 import { Spinner } from '../components/Spinner';
 import { StatCard } from '../components/StatCard';
+import { StreakAchievement } from '../components/StreakAchievement';
 import { useAnalyticsSummary, useDashboardActivity, useDashboardStatistics } from '../hooks/useAnalytics';
 import { useDashboard } from '../hooks/useDashboard';
 import { useNotifications } from '../hooks/useNotifications';
@@ -107,6 +109,8 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
+  const [showAllTodayTasks, setShowAllTodayTasks] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const { data, isLoading, isError, error, refetch } = useDashboard();
   const dashboardActivityQuery = useDashboardActivity();
   const dashboardStatisticsQuery = useDashboardStatistics();
@@ -116,6 +120,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   const summaryCards = data?.summaryCards ?? [];
+  const visibleSummaryCards = summaryCards.filter((card) => card.label !== 'Current Streak');
   const progressCards = data?.progressCards ?? [];
   const upcomingTasks = data?.upcomingTasks ?? { todayTasks: [], tomorrowTasks: [], upcomingDeadlines: [] };
   const notificationItems = notificationsQuery.data ?? [];
@@ -129,9 +134,12 @@ export default function DashboardPage() {
   const readinessLabel = getSummaryValue(summaryCards, 'Applications') !== undefined ? 'Applications' : 'Total Tasks';
   const readinessValue = getSummaryValue(summaryCards, readinessLabel);
   const todayTasks = upcomingTasks.todayTasks ?? [];
+  const visibleTodayTasks = showAllTodayTasks ? todayTasks : todayTasks.slice(0, 3);
+  const visibleActivityItems = showAllActivity ? activityItems : activityItems.slice(0, 4);
   const upcomingDeadlines = upcomingTasks.upcomingDeadlines ?? [];
   const activeRecommendationPath = recommendation?.actionPath || '/practice';
   const rewardProfile = rewardProfileQuery.data;
+  const dashboardStreak = analyticsSummary?.currentStreak ?? Number.parseInt(getSummaryValue(summaryCards, 'Current Streak'), 10);
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -172,60 +180,28 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-xs font-semibold text-slate-400">Current progress</div>
-                <h2 className="mt-2 text-xl font-bold text-white">{currentProgress?.label || 'Progress pending'}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  {currentProgress?.description || 'Progress appears when backend activity exists.'}
-                </p>
-              </div>
-              <ProgressRing value={currentProgress?.percentage} label={currentProgress?.label || 'Progress'} />
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
-                <div className="text-xs text-slate-400">Active plan</div>
-                <div className="mt-1 truncate text-sm font-semibold text-white">{data?.welcome?.activePlan || 'No active plan loaded'}</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
-                <div className="text-xs text-slate-400">{readinessLabel}</div>
-                <div className="mt-1 truncate text-sm font-semibold text-white">{readinessValue ?? 'Pending'}</div>
-              </div>
-            </div>
-            {rewardProfileQuery.isLoading ? (
-              <div className="mt-4 h-16 animate-pulse rounded-2xl bg-white/10" />
-            ) : rewardProfile ? (
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
-                  <div className="text-xs text-slate-400">Coins</div>
-                  <div className="mt-1 text-sm font-semibold text-white">{rewardProfile.coins}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
-                  <div className="text-xs text-slate-400">Level</div>
-                  <div className="mt-1 text-sm font-semibold text-white">{rewardProfile.level}</div>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
-                  <div className="text-xs text-slate-400">Productivity</div>
-                  <div className="mt-1 text-sm font-semibold text-white">{rewardProfile.productivityScore}</div>
-                </div>
-                <div className="sm:col-span-3">
-                  <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                    <span>XP {rewardProfile.xp - rewardProfile.xpForCurrentLevel} / {rewardProfile.xpForNextLevel - rewardProfile.xpForCurrentLevel}</span>
-                    <span>{rewardProfile.xpRemainingToNextLevel} XP to next level</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-slate-800">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-indigo-400 to-violet-400"
-                      style={{
-                        width: `${Math.min(100, Math.max(0, ((rewardProfile.xp - rewardProfile.xpForCurrentLevel) / Math.max(1, rewardProfile.xpForNextLevel - rewardProfile.xpForCurrentLevel)) * 100))}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
+          <DashboardGradientCard
+            title={currentProgress?.label || 'Progress pending'}
+            description={currentProgress?.description || 'Progress appears when backend activity exists.'}
+            metricLabel="Current progress"
+            metricValue={`${Math.min(Math.max(currentProgress?.percentage ?? 0, 0), 100)}%`}
+            progress={currentProgress?.percentage}
+            actionLabel={recommendation?.actionLabel || 'Open practice'}
+            onAction={() => navigate(activeRecommendationPath)}
+            stats={[
+              { label: 'Active plan', value: data?.welcome?.activePlan || 'No active plan loaded' },
+              { label: readinessLabel, value: readinessValue ?? 'Pending' },
+              ...(rewardProfile
+                ? [
+                    { label: 'Level', value: rewardProfile.level },
+                    { label: 'Coins', value: rewardProfile.coins },
+                    { label: 'Productivity', value: rewardProfile.productivityScore },
+                  ]
+                : rewardProfileQuery.isLoading
+                  ? [{ label: 'Rewards', value: 'Loading...' }]
+                  : []),
+            ]}
+          />
         </div>
       </header>
 
@@ -279,7 +255,18 @@ export default function DashboardPage() {
             <SectionCard title="Today's focus">
               <div className="space-y-3">
                 {todayTasks.length ? (
-                  todayTasks.map((task) => <TaskCard key={task.id} task={task} />)
+                  <>
+                    {visibleTodayTasks.map((task) => <TaskCard key={task.id} task={task} />)}
+                    {todayTasks.length > visibleTodayTasks.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllTodayTasks(true)}
+                        className="stitch-button-secondary w-full rounded-full px-4 py-2 text-sm font-semibold"
+                      >
+                        Show more
+                      </button>
+                    ) : null}
+                  </>
                 ) : (
                   <EmptyState
                     title="No tasks due today"
@@ -293,7 +280,10 @@ export default function DashboardPage() {
           </section>
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {summaryCards.slice(0, 4).map((card) => (
+            {Number.isFinite(dashboardStreak) ? (
+              <StreakAchievement days={dashboardStreak} compact className="xl:col-span-2" />
+            ) : null}
+            {visibleSummaryCards.slice(0, Number.isFinite(dashboardStreak) ? 2 : 4).map((card) => (
               <StatCard key={card.label} label={card.label} value={card.value} highlight={card.highlight} />
             ))}
           </section>
@@ -378,13 +368,7 @@ export default function DashboardPage() {
                       </div>
                     ) : null}
                     {analyticsSummary.currentStreak !== undefined ? (
-                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                          <Clock3 size={14} />
-                          Current streak
-                        </div>
-                        <div className="mt-2 font-display text-2xl font-bold text-white">{analyticsSummary.currentStreak} days</div>
-                      </div>
+                      <StreakAchievement days={analyticsSummary.currentStreak} compact className="sm:col-span-2" />
                     ) : null}
                     {analyticsSummary.studyHours?.today !== undefined ? (
                       <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -433,7 +417,18 @@ export default function DashboardPage() {
                 {dashboardActivityQuery.isLoading ? (
                   <Spinner label="Loading activity" />
                 ) : activityItems.length ? (
-                  activityItems.map((activity) => <ActivityCard key={`${activity.type}-${activity.timestamp}`} activity={activity} />)
+                  <>
+                    {visibleActivityItems.map((activity) => <ActivityCard key={`${activity.type}-${activity.timestamp}`} activity={activity} />)}
+                    {activityItems.length > visibleActivityItems.length ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllActivity(true)}
+                        className="stitch-button-secondary w-full rounded-full px-4 py-2 text-sm font-semibold"
+                      >
+                        Show more
+                      </button>
+                    ) : null}
+                  </>
                 ) : (
                   <EmptyState
                     title="No recent activity"

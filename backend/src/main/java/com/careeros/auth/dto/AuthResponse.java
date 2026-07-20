@@ -6,5 +6,7 @@ public record AuthResponse(
     String email,
     String accessToken,
     String tokenType,
-    long expiresInMs) {
+    long expiresInMs,
+    boolean dailyLoginCoinAwarded,
+    int dailyLoginCoinsAwarded) {
 }

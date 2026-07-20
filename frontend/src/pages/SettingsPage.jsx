@@ -1,10 +1,44 @@
-import { Bell, ShieldCheck, UserCircle2 } from 'lucide-react';
+import { Award, Bell, CheckCircle2, Coins, Flame, Gauge, ShieldCheck, Sparkles, Trophy, UserCircle2 } from 'lucide-react';
 import { ApiAlert } from '../components/ApiAlert';
 import { EmptyState } from '../components/EmptyState';
 import { SectionCard } from '../components/SectionCard';
 import { Spinner } from '../components/Spinner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
+
+const scoreRules = [
+  {
+    icon: CheckCircle2,
+    title: 'Complete tasks',
+    points: '+5 coins, +25 XP',
+    detail: 'Every completed task moves your plan forward. Each set of 5 completed tasks adds a +20 coin bonus.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Submit daily check-ins',
+    points: '+2 coins, +10 XP',
+    detail: 'Check-ins power consistency, study-hour tracking, streaks, and your weekly improvement score.',
+  },
+  {
+    icon: Award,
+    title: 'Create revision notes',
+    points: '+3 coins, +15 XP',
+    detail: 'Notes count as learning proof and unlock the Revision Note Builder achievement.',
+  },
+  {
+    icon: Flame,
+    title: 'Daily login',
+    points: '+1 coin once per day',
+    detail: 'The popup and login coin are only granted on the first successful login of each calendar day.',
+  },
+];
+
+const scoreFormulas = [
+  ['Coins', '1 daily login coin once per day + 2 per check-in + 5 per completed task + 20 per 5-task bundle + 3 per note + 30 for a 7-day streak.'],
+  ['XP', '10 per check-in + 25 per completed task + 15 per note + 120 for a 7-day streak.'],
+  ['Productivity', '70% from today task completion and 30% from today study hours, capped at 5 hours for the check-in part.'],
+  ['Consistency', 'Active check-in days from the last 7 days converted into a percentage.'],
+];
 
 export default function SettingsPage() {
   const { user } = useAuth();
@@ -76,6 +110,50 @@ export default function SettingsPage() {
           )}
         </SectionCard>
       </section>
+
+      <SectionCard title="About scoring">
+        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-2xl border border-amber-200/25 bg-amber-400/10 p-5 shadow-[0_0_44px_rgba(251,191,36,0.12)]">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-300/15 text-amber-100">
+              <Trophy size={24} />
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-white">How CareerOS scores progress</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-400">
+              Coins, XP, streaks, productivity, and achievements are generated from the work you record in the app.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {scoreRules.map((rule) => {
+              const Icon = rule.icon;
+              return (
+                <article key={rule.title} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-amber-100">
+                      <Icon size={18} />
+                    </div>
+                    <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-100">
+                      {rule.points}
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-base font-bold text-white">{rule.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">{rule.detail}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {scoreFormulas.map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center gap-2 text-sm font-bold text-white">
+                {label === 'Coins' ? <Coins size={16} /> : <Gauge size={16} />}
+                {label}
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{value}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
     </div>
   );
 }
