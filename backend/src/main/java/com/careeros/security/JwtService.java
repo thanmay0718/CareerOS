@@ -42,9 +42,17 @@ public class JwtService {
     return claims(token).getSubject();
   }
 
+  public Claims extractClaims(String token) {
+    return claims(token);
+  }
+
   public boolean isValid(String token, UserDetails userDetails) {
     String username = extractUsername(token);
     return username.equals(userDetails.getUsername()) && claims(token).getExpiration().after(new Date());
+  }
+
+  public boolean isValid(Claims claims, UserDetails userDetails) {
+    return claims.getSubject().equals(userDetails.getUsername()) && claims.getExpiration().after(new Date());
   }
 
   public long expirationMs() {

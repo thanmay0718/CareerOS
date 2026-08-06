@@ -11,13 +11,20 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "company_profiles")
+@Table(
+    name = "company_profiles",
+    indexes = {
+        @Index(name = "idx_company_profiles_user_name", columnList = "user_id, company_name"),
+        @Index(name = "idx_company_profiles_user_bookmarked", columnList = "user_id, bookmarked"),
+        @Index(name = "idx_company_profiles_user_dream", columnList = "user_id, dream_company")
+    })
 public class CompanyProfile extends BaseEntity {
 
   @Id

@@ -16,7 +16,7 @@ import { SectionCard } from '../components/SectionCard';
 import { Spinner } from '../components/Spinner';
 import { StatCard } from '../components/StatCard';
 import { StreakAchievement } from '../components/StreakAchievement';
-import { useAnalyticsSummary, useDashboardActivity, useDashboardStatistics } from '../hooks/useAnalytics';
+import { useAnalyticsSummary } from '../hooks/useAnalytics';
 import { useDashboard } from '../hooks/useDashboard';
 import { useNotifications } from '../hooks/useNotifications';
 import { useRewardProfile } from '../hooks/useRewards';
@@ -112,8 +112,6 @@ export default function DashboardPage() {
   const [showAllTodayTasks, setShowAllTodayTasks] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
   const { data, isLoading, isError, error, refetch } = useDashboard();
-  const dashboardActivityQuery = useDashboardActivity();
-  const dashboardStatisticsQuery = useDashboardStatistics();
   const analyticsSummaryQuery = useAnalyticsSummary();
   const notificationsQuery = useNotifications();
   const rewardProfileQuery = useRewardProfile();
@@ -124,8 +122,12 @@ export default function DashboardPage() {
   const progressCards = data?.progressCards ?? [];
   const upcomingTasks = data?.upcomingTasks ?? { todayTasks: [], tomorrowTasks: [], upcomingDeadlines: [] };
   const notificationItems = notificationsQuery.data ?? [];
-  const activityItems = dashboardActivityQuery.data ?? data?.recentActivity ?? [];
-  const statisticItems = dashboardStatisticsQuery.data ?? [];
+  const activityItems = data?.recentActivity ?? [];
+  const statisticItems = visibleSummaryCards.slice(0, 6).map((card) => ({
+    label: card.label,
+    value: card.value,
+    highlight: card.highlight,
+  }));
   const analyticsSummary = analyticsSummaryQuery.data;
   const recommendation = data?.recommendation;
   const emptyState = data?.emptyState;
@@ -414,9 +416,7 @@ export default function DashboardPage() {
           <section className="grid gap-6 xl:grid-cols-2">
             <SectionCard title="Recent activity">
               <div className="space-y-3">
-                {dashboardActivityQuery.isLoading ? (
-                  <Spinner label="Loading activity" />
-                ) : activityItems.length ? (
+                {activityItems.length ? (
                   <>
                     {visibleActivityItems.map((activity) => <ActivityCard key={`${activity.type}-${activity.timestamp}`} activity={activity} />)}
                     {activityItems.length > visibleActivityItems.length ? (

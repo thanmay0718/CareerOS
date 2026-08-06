@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CompanyProfileRepository extends JpaRepository<CompanyProfile, Long> {
   List<CompanyProfile> findByUserIdOrderByCompanyNameAsc(Long userId);
+  long countByUserIdAndBookmarkedTrueOrUserIdAndDreamCompanyTrue(Long bookmarkedUserId, Long dreamCompanyUserId);
   Optional<CompanyProfile> findByIdAndUserId(Long id, Long userId);
 }

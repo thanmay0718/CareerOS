@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loginUser, registerUser } from '../api/auth';
 import { clearAuthSession, readAuthSession, writeAuthSession } from '../api/storage';
 import { decodeJwt, isJwtExpired } from '../utils/jwt';
@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
     return () => window.clearTimeout(timer);
   }, [session]);
 
-  async function login(payload) {
+  const login = useCallback(async (payload) => {
     const response = await loginUser(payload);
     if (response.dailyLoginCoinAwarded) {
       const today = new Date().toISOString().slice(0, 10);
@@ -81,32 +81,32 @@ export function AuthProvider({ children }) {
     const nextSession = buildSession(response, response.accessToken, response.expiresInMs);
     setSession(nextSession);
     return response;
-  }
+  }, []);
 
-  async function register(payload) {
+  const register = useCallback(async (payload) => {
     const response = await registerUser(payload);
     const nextSession = buildSession(response, response.accessToken, response.expiresInMs);
     setSession(nextSession);
     return response;
-  }
+  }, []);
 
-  function logout() {
+  const logout = useCallback(() => {
     clearAuthSession();
     setSession(null);
-  }
+  }, []);
+
+  const value = useMemo(() => ({
+    user: session?.user ?? null,
+    token: session?.token ?? null,
+    isAuthenticated: Boolean(session?.token && !isJwtExpired(session.token)),
+    isRestoring,
+    login,
+    register,
+    logout,
+  }), [isRestoring, login, logout, register, session]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user: session?.user ?? null,
-        token: session?.token ?? null,
-        isAuthenticated: Boolean(session?.token && !isJwtExpired(session.token)),
-        isRestoring,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

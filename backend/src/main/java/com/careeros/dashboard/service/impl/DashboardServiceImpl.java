@@ -38,8 +38,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -268,10 +270,8 @@ public class DashboardServiceImpl implements DashboardService {
             || application.getApplicationStatus() == ApplicationStatus.ACCEPTED
             || application.getApplicationStatus() == ApplicationStatus.JOINED)
         .count();
-    long activeResumes = resumeDocumentRepository.findByUserIdAndResumeStatus(userId, ResumeStatus.ACTIVE).size();
-    long bookmarkedCompanies = companyProfileRepository.findByUserIdOrderByCompanyNameAsc(userId).stream()
-        .filter(company -> company.isBookmarked() || company.isDreamCompany())
-        .count();
+    long activeResumes = resumeDocumentRepository.countByUserIdAndResumeStatus(userId, ResumeStatus.ACTIVE);
+    long bookmarkedCompanies = companyProfileRepository.countByUserIdAndBookmarkedTrueOrUserIdAndDreamCompanyTrue(userId, userId);
 
     return List.of(
         new SummaryCard("Total Tasks", String.valueOf(totalTasks), true),
@@ -401,9 +401,9 @@ public class DashboardServiceImpl implements DashboardService {
   }
 
   private long calculateStreak(LocalDate today, List<DailyCheckIn> checkIns) {
-    List<LocalDate> activeDates = checkIns.stream()
+    Set<LocalDate> activeDates = checkIns.stream()
         .map(DailyCheckIn::getCheckInDate)
-        .toList();
+        .collect(java.util.stream.Collectors.toCollection(HashSet::new));
 
     if (activeDates.isEmpty()) {
       return 0;

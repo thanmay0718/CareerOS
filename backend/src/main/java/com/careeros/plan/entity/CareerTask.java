@@ -16,6 +16,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -27,7 +28,14 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "career_tasks")
+@Table(
+    name = "career_tasks",
+    indexes = {
+        @Index(name = "idx_career_tasks_user_created", columnList = "user_id, created_at"),
+        @Index(name = "idx_career_tasks_user_status", columnList = "user_id, task_status"),
+        @Index(name = "idx_career_tasks_user_due", columnList = "user_id, due_date"),
+        @Index(name = "idx_career_tasks_user_plan", columnList = "user_id, plan_id")
+    })
 public class CareerTask extends BaseEntity {
 
   @Id

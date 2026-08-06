@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -20,7 +21,13 @@ import java.time.LocalDate;
 import org.hibernate.annotations.ColumnDefault;
 
 @Entity
-@Table(name = "plans")
+@Table(
+    name = "plans",
+    indexes = {
+        @Index(name = "idx_plans_user_created", columnList = "user_id, created_at"),
+        @Index(name = "idx_plans_user_status", columnList = "user_id, plan_status"),
+        @Index(name = "idx_plans_user_end_date", columnList = "user_id, expected_end_date")
+    })
 public class Plan extends BaseEntity {
 
   @Id

@@ -12,13 +12,19 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "resume_documents")
+@Table(
+    name = "resume_documents",
+    indexes = {
+        @Index(name = "idx_resume_documents_user_status", columnList = "user_id, resume_status"),
+        @Index(name = "idx_resume_documents_user_created", columnList = "user_id, created_date, created_at")
+    })
 public class ResumeDocument extends BaseEntity {
 
   @Id

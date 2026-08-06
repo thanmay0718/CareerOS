@@ -27,7 +27,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -57,6 +63,7 @@ public class CareerTaskController {
   }
 
   @GetMapping
+  @Transactional(readOnly = true)
   public ApiResponse<TaskPageResponse> listTasks(
       @AuthenticationPrincipal UserAccount userAccount,
       @RequestParam(required = false) String search,
@@ -68,27 +75,21 @@ public class CareerTaskController {
       @RequestParam(defaultValue = "10") int size,
       @RequestParam(defaultValue = "createdAt") String sortBy,
       @RequestParam(defaultValue = "desc") String sortDirection) {
-    List<CareerTaskResponse> filtered = careerTaskRepository.findByUserIdOrderByCreatedAtDesc(userAccount.getId())
-        .stream()
-        .filter(task -> search == null || matchesSearch(task, search))
-        .filter(task -> status == null || task.getTaskStatus() == status)
-        .filter(task -> priority == null || task.getPriority() == priority)
-        .filter(task -> category == null || task.getCategory() == category)
-        .filter(task -> planId == null || taskMatchesPlan(task, planId))
-        .sorted(sortTasks(sortBy, sortDirection))
+    int pageSize = Math.min(Math.max(size, 1), 50);
+    Pageable pageable = PageRequest.of(Math.max(page, 0), pageSize, taskSort(sortBy, sortDirection));
+    Page<CareerTask> taskPage = careerTaskRepository.findAll(
+        taskSpecification(userAccount.getId(), search, status, priority, category, planId),
+        pageable);
+    List<CareerTaskResponse> pageItems = taskPage.getContent().stream()
         .map(this::toResponse)
         .toList();
-
-    int fromIndex = Math.min(page * size, filtered.size());
-    int toIndex = Math.min(fromIndex + size, filtered.size());
-    List<CareerTaskResponse> pageItems = filtered.subList(fromIndex, toIndex);
     TaskPageResponse response = new TaskPageResponse(
         pageItems,
-        page,
-        size,
-        filtered.size(),
-        size == 0 ? 0 : (int) Math.ceil(filtered.size() / (double) size),
-        toIndex < filtered.size());
+        taskPage.getNumber(),
+        taskPage.getSize(),
+        taskPage.getTotalElements(),
+        taskPage.getTotalPages(),
+        taskPage.hasNext());
     return ApiResponse.success("Tasks loaded", response);
   }
 
@@ -278,30 +279,48 @@ public class CareerTaskController {
         event.getCreatedAt());
   }
 
-  private boolean matchesSearch(CareerTask task, String search) {
-    String needle = search.toLowerCase(Locale.ROOT);
-    return Stream.of(task.getTitle(), task.getDescription(), task.getNotes())
-        .filter(value -> value != null)
-        .map(value -> value.toLowerCase(Locale.ROOT))
-        .anyMatch(value -> value.contains(needle));
+  private Specification<CareerTask> taskSpecification(
+      Long userId,
+      String search,
+      TaskStatus status,
+      com.careeros.common.enums.PriorityLevel priority,
+      com.careeros.plan.enums.TaskCategory category,
+      Long planId) {
+    return (root, query, criteriaBuilder) -> {
+      List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+      predicates.add(criteriaBuilder.equal(root.get("user").get("id"), userId));
+      if (search != null && !search.isBlank()) {
+        String pattern = "%" + search.toLowerCase(Locale.ROOT) + "%";
+        predicates.add(criteriaBuilder.or(
+            criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), pattern),
+            criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), pattern),
+            criteriaBuilder.like(criteriaBuilder.lower(root.get("notes")), pattern)));
+      }
+      if (status != null) {
+        predicates.add(criteriaBuilder.equal(root.get("taskStatus"), status));
+      }
+      if (priority != null) {
+        predicates.add(criteriaBuilder.equal(root.get("priority"), priority));
+      }
+      if (category != null) {
+        predicates.add(criteriaBuilder.equal(root.get("category"), category));
+      }
+      if (planId != null) {
+        predicates.add(criteriaBuilder.equal(root.get("plan").get("id"), planId));
+      }
+      return criteriaBuilder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+    };
   }
 
-  private boolean taskMatchesPlan(CareerTask task, Long planId) {
-    if (task.getPlan() != null) {
-      return task.getPlan().getId().equals(planId);
-    }
-    return false;
-  }
-
-  private Comparator<CareerTask> sortTasks(String sortBy, String sortDirection) {
-    Comparator<CareerTask> comparator;
-    switch (sortBy == null ? "createdAt" : sortBy) {
-      case "dueDate" -> comparator = Comparator.comparing(CareerTask::getDueDate, Comparator.nullsLast(Comparator.naturalOrder()));
-      case "priority" -> comparator = Comparator.comparing(task -> task.getPriority().ordinal());
-      case "status" -> comparator = Comparator.comparing(task -> task.getTaskStatus().ordinal());
-      default -> comparator = Comparator.comparing(CareerTask::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()));
-    }
-    return "asc".equalsIgnoreCase(sortDirection) ? comparator : comparator.reversed();
+  private Sort taskSort(String sortBy, String sortDirection) {
+    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    String property = switch (sortBy == null ? "createdAt" : sortBy) {
+      case "dueDate" -> "dueDate";
+      case "priority" -> "priority";
+      case "status" -> "taskStatus";
+      default -> "createdAt";
+    };
+    return Sort.by(direction, property);
   }
 
   private Plan resolvePlan(UserAccount userAccount, Long planId) {

@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 @Entity
 @Table(
     name = "daily_check_ins",
+    indexes = @Index(name = "idx_daily_check_ins_user_date", columnList = "user_id, check_in_date"),
     uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "check_in_date"}))
 public class DailyCheckIn extends BaseEntity {
 

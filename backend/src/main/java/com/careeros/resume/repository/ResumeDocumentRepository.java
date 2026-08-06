@@ -10,4 +10,5 @@ public interface ResumeDocumentRepository extends JpaRepository<ResumeDocument, 
   List<ResumeDocument> findByUserIdOrderByCreatedDateDescCreatedAtDesc(Long userId);
   Optional<ResumeDocument> findByIdAndUserId(Long id, Long userId);
   List<ResumeDocument> findByUserIdAndResumeStatus(Long userId, ResumeStatus resumeStatus);
+  long countByUserIdAndResumeStatus(Long userId, ResumeStatus resumeStatus);
 }

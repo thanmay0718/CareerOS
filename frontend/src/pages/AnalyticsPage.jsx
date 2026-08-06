@@ -294,20 +294,23 @@ function LearningActivityHeatmap() {
                   aria-label={`${formatLongDate(day.date)}: ${formatMinutes(day.studyMinutes)} studied, productivity ${day.productivityScore || 0}%`}
                 >
                   {!day.empty ? (
-                    <span className="pointer-events-none absolute bottom-5 left-1/2 z-20 hidden w-72 -translate-x-1/2 rounded-2xl border border-white/10 bg-slate-950/95 p-4 text-left opacity-0 shadow-glow transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
-                      <span className="block text-sm font-bold text-white">{formatLongDate(day.date)}</span>
-                      <span className="mt-3 block text-xs text-slate-400">Study Time</span>
-                      <span className="block text-sm font-semibold text-emerald-100">{formatMinutes(day.studyMinutes)}</span>
-                      <span className="mt-3 block text-xs text-slate-400">Topics Studied</span>
-                      <span className="mt-1 flex flex-wrap gap-1">
-                        {day.topics?.length ? day.topics.slice(0, 4).map((topic) => <span key={topic} className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-slate-200">{topic}</span>) : <span className="text-xs text-slate-500">None recorded</span>}
+                    <span className="pointer-events-none absolute left-1/2 top-5 z-50 hidden w-56 -translate-x-1/2 rounded-xl border border-white/10 bg-slate-950/95 p-3 text-left opacity-0 shadow-glow transition group-hover:block group-hover:opacity-100 group-focus-visible:block group-focus-visible:opacity-100">
+                      <span className="block truncate text-xs font-bold text-white">{formatLongDate(day.date)}</span>
+                      <span className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-slate-300">
+                        <span className="text-slate-400">Time</span>
+                        <span className="text-right font-semibold text-emerald-100">{formatMinutes(day.studyMinutes)}</span>
+                        <span className="text-slate-400">Tasks</span>
+                        <span className="text-right font-semibold text-white">{day.tasksCompleted}</span>
+                        <span className="text-slate-400">Concepts</span>
+                        <span className="text-right font-semibold text-white">{day.completedConcepts}</span>
+                        <span className="text-slate-400">Score</span>
+                        <span className="text-right font-semibold text-white">{day.productivityScore}%</span>
                       </span>
-                      <span className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-300">
-                        <span>Tasks: {day.tasksCompleted}</span>
-                        <span>Concepts: {day.completedConcepts}</span>
-                        <span>Goal: {day.goalCompleted ? 'Completed' : 'Open'}</span>
-                        <span>Score: {day.productivityScore}%</span>
+                      <span className="mt-2 flex flex-wrap gap-1">
+                        {day.topics?.length ? day.topics.slice(0, 2).map((topic) => <span key={topic} className="max-w-[92px] truncate rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-200">{topic}</span>) : <span className="text-[11px] text-slate-500">No topics</span>}
+                        {day.topics?.length > 2 ? <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">+{day.topics.length - 2}</span> : null}
                       </span>
+                      <span className="mt-2 block border-t border-white/10 pt-2 text-[11px] text-slate-400">Goal: {day.goalCompleted ? 'Completed' : 'Open'}</span>
                     </span>
                   ) : null}
                 </button>
