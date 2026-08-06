@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import api from './client';
 
 function compactParams(params) {
   return Object.fromEntries(
@@ -7,41 +7,41 @@ function compactParams(params) {
 }
 
 export async function fetchNotes(params = {}) {
-  const response = await apiClient.get('/notes', { params: compactParams(params) });
+  const response = await api.get('/api/notes', { params: compactParams(params) });
   return response.data.data;
 }
 
 export async function fetchNoteCategories() {
-  const response = await apiClient.get('/notes/categories');
+  const response = await api.get('/api/notes/categories');
   return response.data.data;
 }
 
 export async function fetchRevisionNotes() {
-  const response = await apiClient.get('/notes/revisions');
+  const response = await api.get('/api/notes/revisions');
   return response.data.data;
 }
 
 export async function fetchNote(noteId) {
-  const response = await apiClient.get(`/notes/${noteId}`);
+  const response = await api.get(`/api/notes/${noteId}`);
   return response.data.data;
 }
 
 export async function createNote(payload) {
-  const response = await apiClient.post('/notes', payload);
+  const response = await api.post('/api/notes', payload);
   return response.data.data;
 }
 
 export async function updateNote(noteId, payload) {
-  const response = await apiClient.put(`/notes/${noteId}`, payload);
+  const response = await api.put(`/api/notes/${noteId}`, payload);
   return response.data.data;
 }
 
 export async function scheduleNoteRevision(noteId, daysFromToday) {
-  const response = await apiClient.patch(`/notes/${noteId}/revision`, { daysFromToday });
+  const response = await api.patch(`/api/notes/${noteId}/revision`, { daysFromToday });
   return response.data.data;
 }
 
 export async function deleteNote(noteId) {
-  const response = await apiClient.delete(`/notes/${noteId}`);
+  const response = await api.delete(`/api/notes/${noteId}`);
   return response.data.data;
 }

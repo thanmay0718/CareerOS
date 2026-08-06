@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import api from './client';
 
 function compactParams(params) {
   return Object.fromEntries(
@@ -7,46 +7,46 @@ function compactParams(params) {
 }
 
 export async function fetchTasks(params = {}) {
-  const response = await apiClient.get('/tasks', { params: compactParams(params) });
+  const response = await api.get('/api/tasks', { params: compactParams(params) });
   return response.data.data;
 }
 
 export async function createTask(payload) {
-  const response = await apiClient.post('/tasks', payload);
+  const response = await api.post('/api/tasks', payload);
   return response.data.data;
 }
 
 export async function updateTask(taskId, payload) {
-  const response = await apiClient.put(`/tasks/${taskId}`, payload);
+  const response = await api.put(`/api/tasks/${taskId}`, payload);
   return response.data.data;
 }
 
 export async function completeTask(taskId) {
-  const response = await apiClient.patch(`/tasks/${taskId}/complete`);
+  const response = await api.patch(`/api/tasks/${taskId}/complete`);
   return response.data.data;
 }
 
 export async function missTask(taskId, payload) {
-  const response = await apiClient.patch(`/tasks/${taskId}/missed`, payload);
+  const response = await api.patch(`/api/tasks/${taskId}/missed`, payload);
   return response.data.data;
 }
 
 export async function rescheduleTask(taskId, payload) {
-  const response = await apiClient.patch(`/tasks/${taskId}/reschedule`, payload);
+  const response = await api.patch(`/api/tasks/${taskId}/reschedule`, payload);
   return response.data.data;
 }
 
 export async function fetchTaskTimeline() {
-  const response = await apiClient.get('/tasks/timeline');
+  const response = await api.get('/api/tasks/timeline');
   return response.data.data;
 }
 
 export async function fetchMissedTaskInsights() {
-  const response = await apiClient.get('/tasks/missed-insights');
+  const response = await api.get('/api/tasks/missed-insights');
   return response.data.data;
 }
 
 export async function deleteTask(taskId) {
-  const response = await apiClient.delete(`/tasks/${taskId}`);
+  const response = await api.delete(`/api/tasks/${taskId}`);
   return response.data.data;
 }

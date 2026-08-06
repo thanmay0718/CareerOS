@@ -1,63 +1,63 @@
-import { apiClient } from './client';
+import api from './client';
 
 export async function fetchDashboardActivity() {
-  const response = await apiClient.get('/dashboard/activity');
+  const response = await api.get('/api/dashboard/activity');
   return response.data.data;
 }
 
 export async function fetchDashboardStatistics() {
-  const response = await apiClient.get('/dashboard/statistics');
+  const response = await api.get('/api/dashboard/statistics');
   return response.data.data;
 }
 
 export async function fetchAnalyticsSummary() {
-  const response = await apiClient.get('/analytics/summary');
+  const response = await api.get('/api/analytics/summary');
   return response.data.data;
 }
 
 export async function fetchAnalyticsOverview() {
-  const response = await apiClient.get('/analytics/overview');
+  const response = await api.get('/api/analytics/overview');
   return response.data.data;
 }
 
 export async function fetchAnalyticsStudy() {
-  const response = await apiClient.get('/analytics/study');
+  const response = await api.get('/api/analytics/study');
   return response.data.data;
 }
 
 export async function fetchAnalyticsTasks() {
-  const response = await apiClient.get('/analytics/tasks');
+  const response = await api.get('/api/analytics/tasks');
   return response.data.data;
 }
 
 export async function fetchAnalyticsPlans() {
-  const response = await apiClient.get('/analytics/plans');
+  const response = await api.get('/api/analytics/plans');
   return response.data.data;
 }
 
 export async function fetchAnalyticsCheckins() {
-  const response = await apiClient.get('/analytics/checkins');
+  const response = await api.get('/api/analytics/checkins');
   return response.data.data;
 }
 
 export async function fetchAnalyticsProductivity() {
-  const response = await apiClient.get('/analytics/productivity');
+  const response = await api.get('/api/analytics/productivity');
   return response.data.data;
 }
 
 export async function fetchAnalyticsStory() {
-  const response = await apiClient.get('/analytics/story');
+  const response = await api.get('/api/analytics/story');
   return response.data.data;
 }
 
 export async function fetchLearningHeatmap(year) {
-  const response = await apiClient.get('/analytics/heatmap', {
+  const response = await api.get('/api/analytics/heatmap', {
     params: year ? { year } : undefined,
   });
   return response.data.data;
 }
 
 export async function fetchLearningHeatmapDay(date) {
-  const response = await apiClient.get(`/analytics/heatmap/${date}`);
+  const response = await api.get(`/api/analytics/heatmap/${date}`);
   return response.data.data;
 }

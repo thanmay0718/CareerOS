@@ -1,14 +1,21 @@
 import axios from 'axios';
 import { clearAuthSession, readAuthSession } from './storage';
 
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+if (!apiBaseUrl) {
+  throw new Error('Missing required VITE_API_BASE_URL environment variable.');
+}
+
+const api = axios.create({
+  baseURL: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
-apiClient.interceptors.request.use((config) => {
+api.interceptors.request.use((config) => {
   const session = readAuthSession();
   const token = session?.token;
 
@@ -20,7 +27,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-apiClient.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
@@ -32,3 +39,4 @@ apiClient.interceptors.response.use(
   },
 );
 
+export default api;
